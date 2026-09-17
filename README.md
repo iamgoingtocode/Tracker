@@ -5,27 +5,33 @@ Runs entirely in the browser — designed to be hosted free on GitHub Pages.
 
 ---
 
-## Deploy to GitHub Pages
+## Live site
 
-1. Create a new repository on GitHub (it can be **private** — Pages still works on private repos for
-   personal accounts on paid plans; on a free account make it **public**. The repo being public does
-   **not** expose your data, because your data never leaves your browser — see *Where the data lives*).
+**https://iamgoingtocode.github.io/Tracker/**
 
-2. From this folder:
+Bookmark it. Served from the `main` branch of
+[github.com/iamgoingtocode/Tracker](https://github.com/iamgoingtocode/Tracker).
 
-```bash
-git init && git add . && git commit -m "Divinheal partnership tracker" && git branch -M main && git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO.git && git push -u origin main
-```
+It must be the `https://` URL — the tracker uses the browser's Web Crypto API, which browsers only
+expose on `https://` or `localhost`. Opening `index.html` from your Desktop will **not** work.
 
-3. On GitHub: **Settings → Pages → Source: Deploy from a branch → Branch: `main` / `(root)` → Save.**
+### Updating it
 
-4. After a minute your tracker is live at:
-   `https://YOUR-USERNAME.github.io/YOUR-REPO/`
+Edit `index.html`, then either:
 
-Bookmark that URL. It must be `https://` — the tracker uses the browser's Web Crypto API, which
-browsers only expose on `https://` or `localhost`.
+- **Web:** drag the file onto
+  [github.com/iamgoingtocode/Tracker/upload/main](https://github.com/iamgoingtocode/Tracker/upload/main)
+  and commit. No tooling needed.
+- **Command line:** authenticate once with `gh auth login --web`, then
+  `git commit -am "..." && git push`.
 
-To update later: edit `index.html`, then `git commit -am "..." && git push`.
+Changes go live within about a minute. **Updating the site never touches your data** — your vault
+lives in the browser (and, with sync on, in your private gist), not in the repo.
+
+### A note on the repo being public
+
+The repo contains only the app. It ships with **zero data**: a stranger opening the URL sees an empty
+login screen. Your entries are encrypted in your own browser and are never committed here.
 
 ---
 
