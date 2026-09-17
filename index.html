@@ -1,0 +1,2766 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Divinheal Partnership Tracker</title>
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>" />
+<style>
+/* ============================= TOKENS ============================= */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --surface-2:#fafbfc; --surface-3:#f0f2f5;
+  --text:#14171c; --text-2:#525a66; --text-3:#7b8494;
+  --border:#e2e6eb; --border-2:#ccd2da;
+  --accent:#1f6feb; --accent-fg:#ffffff; --accent-soft:#e8f0fe; --accent-strong:#1a5fc9;
+  --danger:#c92a2a; --danger-soft:#fdecec; --danger-strong:#a91f1f;
+  --ok:#137a44; --ok-soft:#e5f5ec;
+  --warn:#9a6700; --warn-soft:#fdf4e0;
+  --purple:#6b3fa0; --purple-soft:#f0eaf8;
+  --shadow:0 1px 2px rgba(16,22,32,.06), 0 4px 14px rgba(16,22,32,.06);
+  --shadow-lg:0 10px 40px rgba(16,22,32,.18);
+  --r:10px; --r-sm:7px;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --surface:#161b22; --surface-2:#1b212a; --surface-3:#222a35;
+  --text:#e6edf3; --text-2:#a6b1c0; --text-3:#7d8998;
+  --border:#2a323d; --border-2:#3a4451;
+  --accent:#4c8dff; --accent-fg:#06101f; --accent-soft:#182740; --accent-strong:#6aa1ff;
+  --danger:#ff6b6b; --danger-soft:#3a1c1e; --danger-strong:#ff8888;
+  --ok:#3ddc97; --ok-soft:#123027;
+  --warn:#e0a83a; --warn-soft:#332814;
+  --purple:#b18ae0; --purple-soft:#271e38;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+  --shadow-lg:0 10px 40px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+button,input,select,textarea{font:inherit;color:inherit}
+.hidden{display:none !important}
+h1,h2,h3,h4{margin:0;font-weight:640;letter-spacing:-.01em}
+h1{font-size:20px} h2{font-size:17px} h3{font-size:15px} h4{font-size:13px}
+.muted{color:var(--text-2)} .dim{color:var(--text-3)}
+.small{font-size:12.5px}
+.tiny{font-size:11.5px}
+.mono{font-family:var(--mono)}
+.nowrap{white-space:nowrap}
+.row{display:flex;gap:10px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+.spread{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.grow{flex:1;min-width:0}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ============================= BUTTONS ============================= */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:var(--r-sm);
+  border:1px solid var(--border-2);background:var(--surface);color:var(--text);cursor:pointer;
+  font-size:13px;font-weight:540;transition:background .12s,border-color .12s,transform .05s;white-space:nowrap}
+.btn:hover{background:var(--surface-3);border-color:var(--text-3)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn-primary:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn-danger:hover{background:var(--danger-strong);border-color:var(--danger-strong)}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--text-2)}
+.btn-ghost:hover{background:var(--surface-3);border-color:transparent;color:var(--text)}
+.btn-sm{padding:4px 9px;font-size:12px;border-radius:6px}
+.btn-icon{padding:5px 7px;font-size:13px;line-height:1}
+.btn-block{width:100%;justify-content:center}
+
+/* ============================= LOCK SCREEN ============================= */
+#lock{min-height:100vh;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(1000px 500px at 50% -15%, var(--accent-soft), var(--bg) 62%)}
+.lockcard{width:min(440px,100%);background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;box-shadow:var(--shadow-lg);padding:30px}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+.brand .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);color:var(--accent-fg);
+  display:grid;place-items:center;font-size:19px;flex:none}
+.lock-tabs{display:flex;gap:4px;background:var(--surface-3);padding:4px;border-radius:9px;margin:20px 0 18px}
+.lock-tabs button{flex:1;padding:7px;border:0;background:transparent;border-radius:6px;cursor:pointer;
+  font-size:13px;font-weight:560;color:var(--text-2)}
+.lock-tabs button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+
+/* ============================= SHELL ============================= */
+.topbar{position:sticky;top:0;z-index:40;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;padding:0 16px;height:54px}
+.topbar .logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--accent-fg);
+  display:grid;place-items:center;font-size:15px;flex:none}
+.brandname{font-weight:680;letter-spacing:-.02em;font-size:14.5px}
+.searchwrap{position:relative;flex:1;max-width:400px}
+.searchwrap input{width:100%;padding:7px 11px;border:1px solid var(--border-2);border-radius:8px;
+  background:var(--surface-2);font-size:13px}
+.searchwrap input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+.sresults{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);max-height:380px;
+  overflow:auto;z-index:60}
+.sresults a{display:block;padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);text-decoration:none}
+.sresults a:last-child{border-bottom:0}
+.sresults a:hover{background:var(--accent-soft)}
+.savepill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);
+  padding:5px 10px;border-radius:99px;background:var(--surface-3);white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:99px;background:var(--ok);flex:none}
+.dot.busy{background:var(--warn)}
+.dot.err{background:var(--danger)}
+
+.shell{display:flex;align-items:flex-start;min-height:calc(100vh - 54px)}
+.sidebar{width:214px;flex:none;padding:14px 10px;position:sticky;top:54px;
+  height:calc(100vh - 54px);overflow:auto;border-right:1px solid var(--border);background:var(--surface)}
+.navlink{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;color:var(--text-2);
+  font-weight:540;font-size:13.5px;margin-bottom:2px;cursor:pointer;text-decoration:none}
+.navlink:hover{background:var(--surface-3);color:var(--text);text-decoration:none}
+.navlink.on{background:var(--accent-soft);color:var(--accent);font-weight:620}
+.navlink .ic{width:18px;text-align:center;flex:none}
+.navlink .cnt{margin-left:auto;font-size:11px;background:var(--surface-3);color:var(--text-2);
+  padding:1px 7px;border-radius:99px;font-weight:600}
+.navlink.on .cnt{background:var(--accent);color:var(--accent-fg)}
+.navlink .cnt.hot{background:var(--danger);color:#fff}
+.navsec{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--text-3);
+  font-weight:700;padding:14px 10px 6px}
+.content{flex:1;min-width:0;padding:22px 26px 80px}
+.page-head{margin-bottom:18px}
+.crumb{font-size:12.5px;color:var(--text-3);margin-bottom:5px}
+.crumb a{color:var(--text-2)}
+
+/* ============================= CARDS & TABLES ============================= */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+.card-pad{padding:16px}
+.card-head{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;
+  align-items:center;justify-content:space-between;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 15px;box-shadow:var(--shadow)}
+.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);font-weight:700}
+.stat .v{font-size:25px;font-weight:700;letter-spacing:-.02em;margin-top:5px;line-height:1.1}
+.stat .s{font-size:11.5px;color:var(--text-2);margin-top:3px}
+.stat.hot .v{color:var(--danger)}
+.stat.warn .v{color:var(--warn)}
+.stat.good .v{color:var(--ok)}
+.stat.link{cursor:pointer}
+.stat.link:hover{border-color:var(--accent)}
+
+.tablewrap{overflow-x:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+table.tbl th{text-align:left;padding:9px 13px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text-3);font-weight:700;border-bottom:1px solid var(--border);background:var(--surface-2);white-space:nowrap}
+table.tbl td{padding:10px 13px;border-bottom:1px solid var(--border);vertical-align:top}
+table.tbl tr:last-child td{border-bottom:0}
+table.tbl tbody tr:hover{background:var(--surface-2)}
+table.tbl td.acts{text-align:right;white-space:nowrap;width:1%}
+.namecell{font-weight:600}
+.sub{font-size:11.5px;color:var(--text-3);margin-top:2px}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:640;
+  background:var(--surface-3);color:var(--text-2);white-space:nowrap}
+.badge.b-blue{background:var(--accent-soft);color:var(--accent)}
+.badge.b-green{background:var(--ok-soft);color:var(--ok)}
+.badge.b-red{background:var(--danger-soft);color:var(--danger)}
+.badge.b-amber{background:var(--warn-soft);color:var(--warn)}
+.badge.b-purple{background:var(--purple-soft);color:var(--purple)}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11.5px;background:var(--surface-3);
+  color:var(--text-2);border:1px solid var(--border)}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto}
+.tab{padding:9px 15px;border:0;background:transparent;cursor:pointer;font-size:13.5px;font-weight:560;
+  color:var(--text-2);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;gap:7px;align-items:center}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:640}
+.tab .cnt{font-size:11px;background:var(--surface-3);padding:1px 7px;border-radius:99px;font-weight:600}
+.tab.on .cnt{background:var(--accent-soft);color:var(--accent)}
+
+.empty{padding:44px 20px;text-align:center;color:var(--text-3)}
+.empty .big{font-size:32px;margin-bottom:10px;opacity:.55}
+
+.kv{display:grid;grid-template-columns:minmax(110px,auto) 1fr;gap:9px 18px;font-size:13.5px}
+.kv dt{color:var(--text-3);font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;padding-top:2px}
+.kv dd{margin:0}
+.notebox{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:11px 13px;font-size:13px;line-height:1.6}
+
+.meeting{border:1px solid var(--border);border-radius:var(--r);padding:0;margin-bottom:12px;background:var(--surface);overflow:hidden}
+.meeting-h{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;
+  padding:12px 15px;background:var(--surface-2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.meeting-b{padding:14px 15px;display:grid;gap:13px}
+.mfield .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);font-weight:700;margin-bottom:4px}
+.datechip{font-family:var(--mono);font-size:12px;font-weight:650;background:var(--accent-soft);color:var(--accent);
+  padding:3px 9px;border-radius:6px;white-space:nowrap}
+
+.hist{border-left:2px solid var(--border);padding-left:16px;margin-left:6px}
+.hist-i{position:relative;padding:10px 0;border-bottom:1px solid var(--border)}
+.hist-i:last-child{border-bottom:0}
+.hist-i::before{content:"";position:absolute;left:-21px;top:16px;width:9px;height:9px;border-radius:99px;
+  background:var(--text-3);border:2px solid var(--surface)}
+.hist-i[data-a="create"]::before{background:var(--ok)}
+.hist-i[data-a="update"]::before{background:var(--accent)}
+.hist-i[data-a="delete"]::before{background:var(--danger)}
+
+/* ============================= FORMS ============================= */
+.form{display:grid;gap:14px}
+.form .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:620px){.form .grid2{grid-template-columns:1fr}}
+.field{display:block}
+.field>.lab{display:block;font-size:12px;font-weight:640;margin-bottom:5px;color:var(--text-2)}
+.field .req{color:var(--danger)}
+.field .help{font-size:11.5px;color:var(--text-3);margin-top:4px}
+.inp{width:100%;padding:8px 11px;border:1px solid var(--border-2);border-radius:var(--r-sm);
+  background:var(--surface);font-size:13.5px}
+.inp:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+textarea.inp{resize:vertical;min-height:78px;line-height:1.55}
+select.inp{cursor:pointer}
+.inline{display:flex;gap:7px;align-items:center}
+.inline .inp{flex:1}
+.addrow{display:flex;gap:7px;margin-top:7px;padding:9px;background:var(--accent-soft);border-radius:var(--r-sm)}
+.addrow .inp{flex:1;background:var(--surface)}
+.checklist{border:1px solid var(--border-2);border-radius:var(--r-sm);max-height:190px;overflow:auto;background:var(--surface)}
+.checklist label{display:flex;gap:9px;align-items:center;padding:7px 11px;cursor:pointer;
+  border-bottom:1px solid var(--border);font-size:13px}
+.checklist label:last-child{border-bottom:0}
+.checklist label:hover{background:var(--surface-2)}
+.checklist input{margin:0;flex:none;width:15px;height:15px;accent-color:var(--accent)}
+.filters{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.filters .inp{width:auto;min-width:130px;padding:6px 10px;font-size:12.5px}
+
+/* ============================= MODALS ============================= */
+.backdrop{position:fixed;inset:0;background:rgba(10,14,20,.55);backdrop-filter:blur(3px);
+  display:grid;place-items:center;padding:20px;z-index:100;animation:fade .14s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);
+  width:min(620px,100%);max-height:88vh;display:flex;flex-direction:column;animation:pop .16s ease}
+.modal.wide{width:min(840px,100%)}
+.modal.narrow{width:min(440px,100%)}
+.modal-h{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;
+  align-items:center;gap:12px}
+.modal-b{padding:20px;overflow:auto;flex:1}
+.modal-f{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:9px;
+  background:var(--surface-2);border-radius:0 0 14px 14px;flex-wrap:wrap}
+.warnbox{background:var(--danger-soft);border:1px solid var(--danger);color:var(--danger);
+  border-radius:var(--r-sm);padding:11px 13px;font-size:13px;line-height:1.55}
+.infobox{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);
+  border-radius:var(--r-sm);padding:11px 13px;font-size:13px;line-height:1.55}
+.amberbox{background:var(--warn-soft);border:1px solid var(--warn);color:var(--warn);
+  border-radius:var(--r-sm);padding:11px 13px;font-size:13px;line-height:1.55}
+
+#toastRoot{position:fixed;bottom:22px;right:22px;z-index:200;display:grid;gap:9px;justify-items:end}
+.toast{background:var(--text);color:var(--bg);padding:10px 15px;border-radius:9px;font-size:13px;
+  font-weight:540;box-shadow:var(--shadow-lg);animation:pop .16s ease;max-width:330px}
+.toast.err{background:var(--danger);color:#fff}
+
+.ro-banner{background:var(--warn-soft);color:var(--warn);border-bottom:1px solid var(--warn);
+  padding:9px 16px;font-size:13px;font-weight:560;text-align:center}
+
+.due-over{color:var(--danger);font-weight:650}
+.due-soon{color:var(--warn);font-weight:650}
+.done-row td{opacity:.52}
+.done-row .namecell{text-decoration:line-through}
+
+.listmgr{display:grid;gap:8px}
+.listmgr .li{display:flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--border);
+  border-radius:var(--r-sm);background:var(--surface-2)}
+
+@media(max-width:860px){
+  .shell{flex-direction:column}
+  .sidebar{width:100%;position:static;height:auto;display:flex;gap:4px;overflow-x:auto;
+    border-right:0;border-bottom:1px solid var(--border);padding:8px}
+  .navsec{display:none}
+  .navlink{margin:0;white-space:nowrap}
+  .content{padding:16px 14px 70px}
+  .searchwrap{max-width:none}
+  .brandname{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOCK / LOGIN ============ -->
+<div id="lock"></div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden"></div>
+
+<div id="modalRoot"></div>
+<div id="confirmRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   Divinheal Partnership Tracker
+   Single-file, zero-dependency, static-host friendly (GitHub Pages).
+   Data model lives encrypted (AES-GCM / PBKDF2-SHA256) in localStorage,
+   one private vault per login. Nothing leaves the browser.
+   ===================================================================== */
+
+/* ---------- storage keys ---------- */
+const K_ACCOUNTS = 'dh.tracker.accounts.v1';
+const K_VAULT    = u => 'dh.tracker.vault.v1.' + u;
+const K_SESSION  = 'dh.tracker.session.v1';
+const K_THEME    = 'dh.tracker.theme';
+const PBKDF2_ITER = 250000;
+const MAX_HISTORY = 900;
+const MAX_SNAPSHOTS = 20;
+
+/* ---------- tiny utils ---------- */
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2,10));
+const clone = o => JSON.parse(JSON.stringify(o));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayISO = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+const b64e = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+function fmtDate(d){
+  if(!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  if(isNaN(dt)) return esc(d);
+  return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtTS(ts){
+  if(!ts) return '—';
+  return new Date(ts).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function relTime(ts){
+  if(!ts) return '—';
+  const s = Math.floor((Date.now()-ts)/1000);
+  if(s<60) return 'just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  if(s<604800) return Math.floor(s/86400)+'d ago';
+  return fmtTS(ts).split(',')[0];
+}
+function daysUntil(iso){
+  if(!iso) return null;
+  const d = new Date(iso+'T00:00:00'), t = new Date(todayISO()+'T00:00:00');
+  if(isNaN(d)) return null;
+  return Math.round((d-t)/86400000);
+}
+function bytes(n){
+  if(n<1024) return n+' B';
+  if(n<1048576) return (n/1024).toFixed(1)+' KB';
+  return (n/1048576).toFixed(2)+' MB';
+}
+
+/* ---------- toast ---------- */
+function toast(msg, isErr){
+  const el = document.createElement('div');
+  el.className = 'toast' + (isErr ? ' err' : '');
+  el.textContent = msg;
+  $('#toastRoot').appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),320); }, isErr?4200:2100);
+}
+
+/* =====================================================================
+   CRYPTO
+   ===================================================================== */
+async function deriveKey(password, saltB64, iter){
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt:b64d(saltB64), iterations:iter||PBKDF2_ITER, hash:'SHA-256' },
+    base, { name:'AES-GCM', length:256 }, true, ['encrypt','decrypt']
+  );
+}
+async function encryptJSON(key, obj){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(JSON.stringify(obj)));
+  return { iv:b64e(iv), ct:b64e(ct) };
+}
+async function decryptJSON(key, blob){
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64d(blob.iv)}, key, b64d(blob.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+/* =====================================================================
+   ACCOUNTS
+   ===================================================================== */
+function readAccounts(){ try{ return JSON.parse(localStorage.getItem(K_ACCOUNTS) || '{}'); }catch(e){ return {}; } }
+function writeAccounts(a){ localStorage.setItem(K_ACCOUNTS, JSON.stringify(a)); }
+
+async function createAccount(user, password){
+  const accts = readAccounts();
+  const u = user.trim().toLowerCase();
+  if(!u) throw new Error('Pick a username.');
+  if(!/^[a-z0-9._-]{2,32}$/.test(u)) throw new Error('Username: 2–32 chars, letters/numbers/._- only.');
+  if(accts[u]) throw new Error('That username already exists on this browser.');
+  if(password.length < 8) throw new Error('Password must be at least 8 characters.');
+  const salt = b64e(crypto.getRandomValues(new Uint8Array(16)));
+  const key = await deriveKey(password, salt, PBKDF2_ITER);
+  const verifier = await encryptJSON(key, {ok:true, u});
+  accts[u] = { salt, iter:PBKDF2_ITER, verifier, createdAt:Date.now(), display:user.trim() };
+  writeAccounts(accts);
+  const vault = seedVault(user.trim());
+  localStorage.setItem(K_VAULT(u), JSON.stringify(await encryptJSON(key, vault)));
+  return { user:u, key, vault };
+}
+async function unlockAccount(user, password){
+  const accts = readAccounts();
+  const u = user.trim().toLowerCase();
+  const a = accts[u];
+  if(!a) throw new Error('No such account on this browser. Create one, or import a backup.');
+  const key = await deriveKey(password, a.salt, a.iter);
+  try { await decryptJSON(key, a.verifier); }
+  catch(e){ throw new Error('Wrong password.'); }
+  let vault;
+  const raw = localStorage.getItem(K_VAULT(u));
+  if(!raw){ vault = seedVault(a.display || u); }
+  else { vault = migrate(await decryptJSON(key, JSON.parse(raw))); }
+  return { user:u, key, vault };
+}
+
+/* =====================================================================
+   VAULT SHAPE
+   ===================================================================== */
+function seedVault(displayName){
+  return {
+    version: 1,
+    createdAt: Date.now(),
+    owner: displayName || '',
+    globals: {
+      b2bTypes: ['NGO','Insurance company','Insurtech / HMO','Corporate / CSR','Government body','Embassy / High Commission',
+                 'Diaspora / community body','Religious charity','Professional body','Hospital','Diagnostics network',
+                 'Airline / travel agent','Healthcare startup','Trust / Foundation','TPA','Bank / NBFC'],
+      partnerTypes: ['Facilitator','Consultant','Broker','Agent','Channel partner','Referral partner','Doctor / Consultant',
+                     'Distributor','Advisor','Community leader','Employee / Internal'],
+      countries: ['Kenya','Nigeria','Tanzania','Uganda','Ethiopia','Ghana','Zambia','Zimbabwe','Botswana','Rwanda',
+                  'UAE','Oman','Saudi Arabia','Qatar','Kuwait','Bahrain','Yemen','Iraq',
+                  'Bangladesh','Nepal','Sri Lanka','Myanmar','Maldives','India','Other'],
+      stages: ['Identified','Initial contact','In discussion','Proposal shared','Negotiation','MoU / Agreement signed',
+               'Live — sending cases','On hold','Dropped'],
+      itemStatuses: ['Open','In progress','Blocked','Done'],
+      priorities: ['High','Medium','Low'],
+      institutions: []
+    },
+    profiles: [], b2b: [], partners: [], meetings: [], openItems: [],
+    history: [], snapshots: [],
+    meta: { lastSnapshotAt: 0 }
+  };
+}
+function migrate(v){
+  const s = seedVault(v.owner);
+  v.globals = Object.assign({}, s.globals, v.globals || {});
+  for(const k of ['profiles','b2b','partners','meetings','openItems','history','snapshots']) v[k] = v[k] || [];
+  v.meta = v.meta || { lastSnapshotAt: 0 };
+  v.version = 1;
+  return v;
+}
+
+/* =====================================================================
+   SESSION STATE
+   ===================================================================== */
+const S = { user:null, key:null, vault:null, readOnly:false, savedAt:null, saving:false, dirty:false };
+const V = () => S.vault;
+const canEdit = () => !S.readOnly;
+
+/* ---------- auto-save ---------- */
+let saveTimer = null;
+function save(immediate){
+  if(S.readOnly || !S.key) return;
+  S.dirty = true; paintSaveState();
+  clearTimeout(saveTimer);
+  const run = async () => {
+    try{
+      S.saving = true; paintSaveState();
+      maybeSnapshot();
+      const blob = await encryptJSON(S.key, S.vault);
+      localStorage.setItem(K_VAULT(S.user), JSON.stringify(blob));
+      S.savedAt = Date.now(); S.dirty = false; S.saving = false;
+      paintSaveState();
+      scheduleSyncPush();
+    }catch(e){
+      S.saving = false; S.dirty = true; paintSaveState(String(e.message||e));
+      if(String(e).match(/quota|exceeded/i)) toast('Storage full — export a backup and trim history in Backups.', true);
+      else toast('Save failed: '+(e.message||e), true);
+    }
+  };
+  if(immediate) run(); else saveTimer = setTimeout(run, 400);
+}
+function paintSaveState(err){
+  const el = $('#saveState'); if(!el) return;
+  if(err){ el.innerHTML = '<span class="dot err"></span> Save error'; el.title = err; return; }
+  if(S.saving || S.dirty){ el.innerHTML = '<span class="dot busy"></span> Saving…'; return; }
+  el.innerHTML = '<span class="dot"></span> Saved ' + (S.savedAt ? relTime(S.savedAt) : '');
+  el.title = S.savedAt ? 'Last saved ' + fmtTS(S.savedAt) : '';
+}
+setInterval(()=>{ if(!S.dirty && !S.saving) paintSaveState(); paintSyncState(); }, 30000);
+
+/* ---------- rolling snapshots ---------- */
+function maybeSnapshot(){
+  const v = V();
+  const since = Date.now() - (v.meta.lastSnapshotAt || 0);
+  if(since < 6*3600*1000) return;
+  pushSnapshot('Auto snapshot');
+}
+function pushSnapshot(label){
+  const v = V();
+  const payload = clone({ globals:v.globals, profiles:v.profiles, b2b:v.b2b, partners:v.partners,
+                          meetings:v.meetings, openItems:v.openItems });
+  v.snapshots.unshift({ id:uid(), ts:Date.now(), label:label||'Snapshot', json:JSON.stringify(payload) });
+  if(v.snapshots.length > MAX_SNAPSHOTS) v.snapshots.length = MAX_SNAPSHOTS;
+  v.meta.lastSnapshotAt = Date.now();
+}
+
+/* ---------- change history (per-entry backup) ---------- */
+function commit(action, entity, entityId, before, after, label, bundle){
+  const v = V();
+  v.history.unshift({
+    id:uid(), ts:Date.now(), action, entity, entityId,
+    label: label || '',
+    before: before ? clone(before) : null,
+    after:  after  ? clone(after)  : null,
+    bundle: bundle ? clone(bundle) : null,
+    profileId: (after && after.profileId) || (before && before.profileId) || null,
+    parentId:  (after && after.parentId)  || (before && before.parentId)  || null
+  });
+  if(v.history.length > MAX_HISTORY) v.history.length = MAX_HISTORY;
+  save();
+}
+
+/* =====================================================================
+   CLOUD SYNC — private GitHub Gist, ciphertext only
+   The vault is encrypted locally BEFORE anything is sent. GitHub stores an
+   opaque blob it cannot read; the key is derived from your password and
+   never leaves this browser. The KDF salt travels with the blob so another
+   device can derive the same key from the same password.
+   ===================================================================== */
+const K_SYNC    = u => 'dh.tracker.sync.v1.' + u;
+const K_DEVICE  = 'dh.tracker.device.v1';
+const GIST_FILE = 'divinheal-tracker.vault.json';
+const GIST_DESC = 'Divinheal Partnership Tracker — encrypted vault (do not edit by hand)';
+const SYNC_DEBOUNCE = 4000;
+
+const SY = { token:null, gistId:null, lastSeenAt:0, lastSyncAt:0, status:'off', error:null, pending:false };
+
+function deviceName(){
+  let d = null;
+  try{ d = localStorage.getItem(K_DEVICE); }catch(_){}
+  if(!d){
+    const ua = navigator.userAgent;
+    const os = /Windows/.test(ua) ? 'Windows' : /Macintosh|Mac OS/.test(ua) ? 'Mac'
+             : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS'
+             : /Linux/.test(ua) ? 'Linux' : 'Device';
+    d = os + '-' + uid().slice(0,4);
+    try{ localStorage.setItem(K_DEVICE, d); }catch(_){}
+  }
+  return d;
+}
+
+async function loadSyncConfig(){
+  Object.assign(SY, {token:null, gistId:null, lastSeenAt:0, status:'off', error:null, pending:false});
+  let raw = null;
+  try{ raw = localStorage.getItem(K_SYNC(S.user)); }catch(_){}
+  if(!raw) return;
+  try{
+    const cfg = await decryptJSON(S.key, JSON.parse(raw));
+    SY.token = cfg.token; SY.gistId = cfg.gistId;
+    SY.lastSeenAt = cfg.lastSeenAt || 0; SY.lastSyncAt = cfg.lastSyncAt || 0;
+    SY.status = 'idle';
+  }catch(e){ SY.status = 'off'; }
+}
+async function saveSyncConfig(){
+  if(S.readOnly) return;
+  try{
+    if(!SY.token){ localStorage.removeItem(K_SYNC(S.user)); return; }
+    const blob = await encryptJSON(S.key, {token:SY.token, gistId:SY.gistId,
+                                           lastSeenAt:SY.lastSeenAt, lastSyncAt:SY.lastSyncAt});
+    localStorage.setItem(K_SYNC(S.user), JSON.stringify(blob));
+  }catch(e){ /* non-fatal */ }
+}
+
+/* ---------- GitHub API ---------- */
+async function ghFetch(path, opts, token){
+  let r;
+  try{
+    r = await fetch('https://api.github.com' + path, Object.assign({
+      headers: { 'Authorization':'Bearer ' + (token || SY.token),
+                 'Accept':'application/vnd.github+json',
+                 'X-GitHub-Api-Version':'2022-11-28',
+                 'Content-Type':'application/json' }
+    }, opts || {}));
+  }catch(e){
+    throw new Error('Could not reach GitHub. Check your internet connection.');
+  }
+  if(!r.ok){
+    let msg = r.status + ' ' + r.statusText;
+    try{ const j = await r.json(); if(j && j.message) msg = j.message; }catch(_){}
+    if(r.status === 401) msg = 'GitHub rejected the token (401). It must be a CLASSIC token with the "gist" scope — fine-grained tokens cannot access gists.';
+    if(r.status === 403) msg = 'GitHub refused the request (403): ' + msg + '. Usually a missing "gist" scope, or a rate limit.';
+    if(r.status === 404) msg = 'Gist not found (404). It may have been deleted, or this token cannot see it.';
+    throw new Error(msg);
+  }
+  return r.status === 204 ? null : r.json();
+}
+async function gistReadPayload(gistId, token){
+  const g = await ghFetch('/gists/' + gistId, null, token);
+  const f = g.files && g.files[GIST_FILE];
+  if(!f) throw new Error('That gist does not contain a tracker vault.');
+  let content = f.content;
+  if(f.truncated && f.raw_url){
+    const rr = await fetch(f.raw_url);
+    if(!rr.ok) throw new Error('Could not download the full vault from GitHub.');
+    content = await rr.text();
+  }
+  let p;
+  try{ p = JSON.parse(content); }catch(e){ throw new Error('The synced vault is corrupted.'); }
+  if(!p || p.app !== 'divinheal-tracker' || !p.blob) throw new Error('That gist is not a tracker vault.');
+  return p;
+}
+async function buildSyncPayload(){
+  const a = readAccounts()[S.user] || {};
+  const blob = await encryptJSON(S.key, S.vault);
+  return { app:'divinheal-tracker', kind:'sync', version:1,
+           updatedAt: Date.now(), device: deviceName(), account: S.user,
+           kdf: { salt:a.salt, iter:a.iter, algo:'PBKDF2-SHA256', cipher:'AES-256-GCM' },
+           blob };
+}
+
+/* ---------- push / pull ---------- */
+let syncTimer = null;
+function scheduleSyncPush(){
+  if(!SY.token || S.readOnly) return;
+  SY.pending = true; paintSyncState();
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(()=>syncPush(), SYNC_DEBOUNCE);
+}
+
+async function syncPush(opts){
+  opts = opts || {};
+  if(!SY.token || S.readOnly) return;
+  clearTimeout(syncTimer);
+  SY.status = 'syncing'; SY.error = null; paintSyncState();
+  try{
+    if(SY.gistId && !opts.force){
+      let remote = null;
+      try{ remote = await gistReadPayload(SY.gistId); }
+      catch(e){ if(!/404|not found/i.test(e.message)) throw e; }
+      if(remote && remote.updatedAt > SY.lastSeenAt && remote.device !== deviceName()){
+        const pick = await choiceDialog({
+          title:'Both devices have changes',
+          message:'<b>'+esc(remote.device)+'</b> saved changes at '+esc(fmtTS(remote.updatedAt))+
+                  ', after this device last synced.<br><br>Whichever version you discard is snapshotted '+
+                  'first, so it stays recoverable under <b>Backups &rsaquo; Snapshots</b>.',
+          choices:[
+            {label:'Keep this device’s version', cls:'btn-primary'},
+            {label:'Take the other device’s version', cls:''},
+            {label:'Do nothing for now', cls:'btn-ghost'}
+          ]});
+        if(pick === 1){ await applyRemote(remote); SY.status='idle'; paintSyncState(); return; }
+        if(pick !== 0){ SY.status='idle'; SY.pending=true; paintSyncState(); return; }
+        pushSnapshot('Before overwriting sync from ' + remote.device);
+      }
+    }
+    const payload = await buildSyncPayload();
+    const body = { description: GIST_DESC, files: {} };
+    body.files[GIST_FILE] = { content: JSON.stringify(payload) };
+    let res;
+    if(SY.gistId){
+      res = await ghFetch('/gists/' + SY.gistId, {method:'PATCH', body: JSON.stringify(body)});
+    } else {
+      body.public = false;
+      res = await ghFetch('/gists', {method:'POST', body: JSON.stringify(body)});
+      SY.gistId = res.id;
+    }
+    SY.lastSeenAt = payload.updatedAt;
+    SY.lastSyncAt = Date.now();
+    SY.status = 'idle'; SY.pending = false; SY.error = null;
+    await saveSyncConfig();
+    if(opts.announce) toast('Synced to GitHub.');
+  }catch(e){
+    SY.status = 'error'; SY.error = e.message || String(e);
+    if(opts.announce) toast('Sync failed: ' + SY.error, true);
+  }
+  paintSyncState();
+}
+
+async function applyRemote(remote){
+  let v;
+  try{ v = await decryptJSON(S.key, remote.blob); }
+  catch(e){ throw new Error('The synced vault was encrypted with a different password, so it cannot be opened here.'); }
+  pushSnapshot('Before pulling sync from ' + remote.device);
+  const keepSnaps = S.vault.snapshots;
+  S.vault = migrate(v);
+  S.vault.snapshots = keepSnaps.concat(S.vault.snapshots || []).slice(0, MAX_SNAPSHOTS);
+  SY.lastSeenAt = remote.updatedAt;
+  SY.lastSyncAt = Date.now();
+  SY.pending = false;
+  await saveSyncConfig();
+  save(true);
+  toast('Pulled the latest from ' + remote.device + '.');
+  render();
+}
+
+async function syncPull(opts){
+  opts = opts || {};
+  if(!SY.token || !SY.gistId || S.readOnly) return;
+  SY.status = 'syncing'; SY.error = null; paintSyncState();
+  try{
+    const remote = await gistReadPayload(SY.gistId);
+    if(remote.updatedAt > SY.lastSeenAt && remote.device !== deviceName()){
+      if(SY.pending){
+        const pick = await choiceDialog({
+          title:'Both devices have changes',
+          message:'<b>'+esc(remote.device)+'</b> has changes from '+esc(fmtTS(remote.updatedAt))+
+                  ', and this device has unsynced changes too.<br><br>The version you discard is snapshotted first.',
+          choices:[
+            {label:'Take the other device’s version', cls:'btn-primary'},
+            {label:'Keep this device’s version', cls:''},
+            {label:'Decide later', cls:'btn-ghost'}
+          ]});
+        if(pick === 1){ SY.status='idle'; paintSyncState(); syncPush({force:true, announce:true}); return; }
+        if(pick !== 0){ SY.status='idle'; paintSyncState(); return; }
+      }
+      await applyRemote(remote);
+    } else if(opts.announce){
+      toast('Already up to date.');
+    }
+    SY.status = 'idle'; SY.error = null;
+  }catch(e){
+    SY.status = 'error'; SY.error = e.message || String(e);
+    if(opts.announce) toast('Sync failed: ' + SY.error, true);
+  }
+  paintSyncState();
+}
+
+function paintSyncState(){
+  const el = document.getElementById('syncState');
+  if(!el) return;
+  if(!SY.token){ el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  let dot = '', label = 'Sync on';
+  if(SY.status === 'syncing'){ dot = 'busy'; label = 'Syncing…'; }
+  else if(SY.status === 'error'){ dot = 'err'; label = 'Sync error'; }
+  else if(SY.pending){ dot = 'busy'; label = 'Sync queued'; }
+  else if(SY.lastSyncAt){ label = 'Synced ' + relTime(SY.lastSyncAt); }
+  el.innerHTML = '<span class="dot ' + dot + '"></span>☁ ' + esc(label);
+  el.title = SY.error ? SY.error : (SY.lastSyncAt ? 'Last synced ' + fmtTS(SY.lastSyncAt) : 'Cloud sync is on');
+}
+
+/* ---------- three-way chooser (confirm root, so it can stack over a form) ---------- */
+function choiceDialog({title, message, choices}){
+  return new Promise(resolve=>{
+    $('#confirmRoot').innerHTML =
+      '<div class="backdrop" data-cbd><div class="modal narrow" role="alertdialog" aria-modal="true">'+
+        '<div class="modal-h"><h2>'+esc(title)+'</h2></div>'+
+        '<div class="modal-b"><div class="amberbox">'+message+'</div></div>'+
+        '<div class="modal-f" style="flex-direction:column;align-items:stretch">'+
+          choices.map((c,i)=>'<button class="btn '+(c.cls||'')+' btn-block" data-ch="'+i+'">'+esc(c.label)+'</button>').join('')+
+        '</div></div></div>';
+    const root = $('#confirmRoot');
+    const done = v => { root.innerHTML=''; resolve(v); };
+    choices.forEach((c,i)=>{ root.querySelector('[data-ch="'+i+'"]').onclick = ()=>done(i); });
+    root.querySelector('[data-cbd]').onclick = e => { if(e.target.hasAttribute('data-cbd')) done(-1); };
+  });
+}
+
+/* ---------- connect / disconnect ---------- */
+const TOKEN_URL = 'https://github.com/settings/tokens/new?scopes=gist&description=Divinheal%20Tracker%20sync';
+function syncSetupStepsHTML(){
+  return '<div style="margin-bottom:16px"><b>One-time setup</b>'+
+    '<ol style="margin:8px 0 0;padding-left:20px;line-height:1.85">'+
+      '<li>Open <a href="'+TOKEN_URL+'" target="_blank" rel="noopener noreferrer">this GitHub token page ↗</a> — it pre-ticks the right scope.</li>'+
+      '<li>It must be a <b>classic</b> token with only <b class="mono">gist</b> ticked. '+
+        'Fine-grained tokens cannot touch gists.</li>'+
+      '<li>Pick an expiry you are comfortable with, generate it, and paste it below.</li>'+
+    '</ol></div>';
+}
+
+function syncConnectDialog(){
+  openModal({
+    title:'Turn on cloud sync',
+    size:'wide',
+    bodyHTML:
+      '<div class="infobox" style="margin-bottom:16px">'+
+        '<b>What actually gets uploaded:</b> your vault <i>after</i> it has been encrypted here with your '+
+        'password (AES-256-GCM). GitHub stores an unreadable blob. The key never leaves this browser, and '+
+        'GitHub never sees your password.</div>'+
+      syncSetupStepsHTML()+
+      '<div class="form">'+
+        '<label class="field"><span class="lab">GitHub token <span class="req">*</span></span>'+
+          '<input class="inp mono" type="password" id="syTok" autocomplete="off" spellcheck="false" placeholder="ghp_…"></label>'+
+        '<label class="field"><span class="lab">Existing gist ID (optional)</span>'+
+          '<input class="inp mono" type="text" id="syGist" autocomplete="off" spellcheck="false" placeholder="leave blank to create a new private gist">'+
+          '<div class="help">Only needed if a vault is already synced and you want this device to join it.</div></label>'+
+      '</div>'+
+      '<div class="amberbox" style="margin-top:16px">The token is stored <b>encrypted with your password</b> on this '+
+      'device and is never written into exported backups. Revoke it any time from GitHub settings.</div>',
+    actions:[{label:'Cancel'},{label:'Connect', cls:'btn-primary', onClick: async ()=>{
+      const tok = $('#syTok').value.trim();
+      const gid = $('#syGist').value.trim();
+      if(!tok){ toast('Paste your token first.', true); return false; }
+      try{
+        await ghFetch('/user', null, tok);
+        SY.token = tok; SY.gistId = gid || null; SY.lastSeenAt = 0;
+        if(gid){
+          const remote = await gistReadPayload(gid, tok);
+          const pick = await choiceDialog({
+            title:'Join this synced vault',
+            message:'That gist holds a vault last saved by <b>'+esc(remote.device||'another device')+'</b> at '+
+                    esc(fmtTS(remote.updatedAt))+'.<br><br>Which version should win right now?',
+            choices:[
+              {label:'Take the gist’s version', cls:'btn-primary'},
+              {label:'Keep this device and overwrite the gist', cls:''},
+              {label:'Cancel', cls:'btn-ghost'}
+            ]});
+          if(pick === -1 || pick === 2){ SY.token=null; SY.gistId=null; SY.status='off'; return false; }
+          if(pick === 0){ await applyRemote(remote); await saveSyncConfig(); toast('Cloud sync is on.'); render(); return true; }
+        }
+        await syncPush({force:true});
+        if(SY.status === 'error') throw new Error(SY.error);
+        toast('Cloud sync is on.');
+        render();
+        return true;
+      }catch(e){
+        SY.token = null; SY.gistId = null; SY.status = 'off';
+        toast(e.message || String(e), true);
+        return false;
+      }
+    }}]
+  });
+}
+
+async function syncDisconnect(){
+  const ok = await confirmDialog({
+    title:'Turn off cloud sync?', danger:true, confirmLabel:'Turn off sync',
+    message:'This device stops syncing and forgets the token.<br><br>'+
+      'Your data stays here, and the gist stays on GitHub — delete it yourself at '+
+      '<a href="https://gist.github.com" target="_blank" rel="noopener noreferrer">gist.github.com ↗</a> if you want it gone.' });
+  if(!ok) return;
+  SY.token = null; SY.gistId = null; SY.status = 'off'; SY.pending = false;
+  try{ localStorage.removeItem(K_SYNC(S.user)); }catch(_){}
+  toast('Cloud sync turned off.');
+  render();
+}
+
+/* ---------- joining from a brand-new device (lock screen) ---------- */
+function syncJoinDialog(){
+  openModal({
+    title:'Sign in on this device from sync',
+    size:'wide',
+    bodyHTML:
+      '<div class="infobox" style="margin-bottom:16px">Pulls your encrypted vault from GitHub and sets this '+
+      'device up with it. You need the <b>same password</b> you use elsewhere — it is the decryption key, '+
+      'and nothing can recover the data without it.</div>'+
+      syncSetupStepsHTML()+
+      '<div class="form">'+
+        '<label class="field"><span class="lab">GitHub token <span class="req">*</span></span>'+
+          '<input class="inp mono" type="password" id="sjTok" autocomplete="off" spellcheck="false" placeholder="ghp_…"></label>'+
+        '<label class="field"><span class="lab">Your password <span class="req">*</span></span>'+
+          '<input class="inp" type="password" id="sjPass" autocomplete="current-password">'+
+          '<div class="help">The same password you set on your other device.</div></label>'+
+        '<label class="field"><span class="lab">Gist ID (optional)</span>'+
+          '<input class="inp mono" type="text" id="sjGist" autocomplete="off" spellcheck="false" placeholder="leave blank and I will find it">'+
+          '<div class="help">Left blank, the tracker scans your gists for the vault automatically.</div></label>'+
+      '</div>',
+    actions:[{label:'Cancel'},{label:'Pull my data', cls:'btn-primary', onClick: async ()=>{
+      const tok = $('#sjTok').value.trim();
+      const pass = $('#sjPass').value;
+      let gid = $('#sjGist').value.trim();
+      if(!tok || !pass){ toast('Token and password are both needed.', true); return false; }
+      try{
+        await ghFetch('/user', null, tok);
+        if(!gid){
+          const list = await ghFetch('/gists?per_page=100', null, tok);
+          const hits = (list || []).filter(g => g.files && g.files[GIST_FILE])
+                        .sort((a,b) => String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
+          if(!hits.length) throw new Error('No synced tracker vault found in your gists. Paste the gist ID explicitly, or turn sync on from your other device first.');
+          if(hits.length === 1) gid = hits[0].id;
+          else {
+            // never silently guess between several vaults
+            const pick = await choiceDialog({
+              title:'Several synced vaults found',
+              message:'This GitHub account holds '+hits.length+' tracker vaults. Pick the one to sign in to — newest first.',
+              choices: hits.slice(0,6).map(g => ({
+                label: g.id.slice(0,10) + '…  ·  updated ' +
+                       (g.updated_at ? new Date(g.updated_at).toLocaleString('en-GB') : 'unknown'), cls:'' }))
+            });
+            if(pick < 0) return false;
+            gid = hits[pick].id;
+          }
+        }
+        const payload = await gistReadPayload(gid, tok);
+        const user = (payload.account || 'me');
+        const key = await deriveKey(pass, payload.kdf.salt, payload.kdf.iter);
+        let vault;
+        try{ vault = await decryptJSON(key, payload.blob); }
+        catch(e){ throw new Error('That password does not open this vault. It must match the one used on your other device.'); }
+
+        const accts = readAccounts();
+        accts[user] = { salt:payload.kdf.salt, iter:payload.kdf.iter,
+                        verifier: await encryptJSON(key, {ok:true, u:user}),
+                        createdAt: Date.now(), display: user };
+        writeAccounts(accts);
+
+        S.user = user; S.key = key; S.vault = migrate(vault); S.readOnly = false;
+        localStorage.setItem(K_VAULT(user), JSON.stringify(await encryptJSON(key, S.vault)));
+        SY.token = tok; SY.gistId = gid; SY.lastSeenAt = payload.updatedAt; SY.lastSyncAt = Date.now();
+        SY.status = 'idle'; SY.pending = false;
+        await saveSyncConfig();
+        await stashSession();
+
+        $('#lock').classList.add('hidden');
+        $('#app').classList.remove('hidden');
+        location.hash = '#/dash';
+        render();
+        toast('Signed in as "' + user + '" — data pulled from ' + (payload.device || 'sync') + '.');
+        return true;
+      }catch(e){ toast(e.message || String(e), true); return false; }
+    }}]
+  });
+}
+
+/* =====================================================================
+   DATA ACCESSORS
+   ===================================================================== */
+const byId = (arr,id) => arr.find(x=>x.id===id);
+const profile   = id => byId(V().profiles, id);
+const entity    = (t,id) => byId(t==='b2b' ? V().b2b : V().partners, id);
+const entList   = t => (t==='b2b' ? V().b2b : V().partners);
+const profB2b   = pid => V().b2b.filter(x=>x.profileId===pid);
+const profPart  = pid => V().partners.filter(x=>x.profileId===pid);
+const entMeetings = (t,id) => V().meetings.filter(m=>m.parentType===t && m.parentId===id)
+                                .sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+const entItems  = (t,id) => V().openItems.filter(i=>i.parentType===t && i.parentId===id);
+const openOf    = arr => arr.filter(i=>i.status!=='Done');
+const ENT_LABEL = { b2b:'B2B partnership', partner:'Partner' };
+
+function entName(t,id){ const e = entity(t,id); return e ? e.name : '(deleted)'; }
+function lastActivity(t,id){
+  const ms = entMeetings(t,id);
+  const e = entity(t,id);
+  let ts = e ? (e.updatedAt||e.createdAt||0) : 0;
+  if(ms.length){ const d = new Date(ms[0].date+'T00:00:00').getTime(); if(!isNaN(d) && d>ts) ts = d; }
+  return ts;
+}
+function stageBadge(stage){
+  const map = {'Live — sending cases':'b-green','MoU / Agreement signed':'b-green','Negotiation':'b-blue',
+    'Proposal shared':'b-blue','In discussion':'b-blue','Initial contact':'b-purple','Identified':'',
+    'On hold':'b-amber','Dropped':'b-red'};
+  return '<span class="badge '+(map[stage]||'')+'">'+esc(stage||'—')+'</span>';
+}
+function itemBadge(st){
+  const map = {'Open':'b-blue','In progress':'b-amber','Blocked':'b-red','Done':'b-green'};
+  return '<span class="badge '+(map[st]||'')+'">'+esc(st||'—')+'</span>';
+}
+function prioBadge(p){
+  const map = {'High':'b-red','Medium':'b-amber','Low':''};
+  return '<span class="badge '+(map[p]||'')+'">'+esc(p||'—')+'</span>';
+}
+function dueCell(item){
+  if(!item.due) return '<span class="dim">—</span>';
+  if(item.status==='Done') return '<span class="dim">'+fmtDate(item.due)+'</span>';
+  const d = daysUntil(item.due);
+  if(d===null) return esc(item.due);
+  if(d<0)  return '<span class="due-over">'+fmtDate(item.due)+' · '+Math.abs(d)+'d late</span>';
+  if(d<=3) return '<span class="due-soon">'+fmtDate(item.due)+(d===0?' · today':' · in '+d+'d')+'</span>';
+  return fmtDate(item.due);
+}
+
+/* =====================================================================
+   MODALS
+   ===================================================================== */
+function closeModal(){ $('#modalRoot').innerHTML=''; }
+function openModal({title, bodyHTML, actions, size, onMount}){
+  const acts = (actions||[]).map((a,i)=>
+    '<button class="btn '+(a.cls||'')+'" data-mact="'+i+'">'+esc(a.label)+'</button>').join('');
+  $('#modalRoot').innerHTML =
+    '<div class="backdrop" data-mbackdrop>'+
+      '<div class="modal '+(size||'')+'" role="dialog" aria-modal="true">'+
+        '<div class="modal-h"><h2>'+esc(title)+'</h2>'+
+          '<button class="btn btn-ghost btn-icon" data-mclose aria-label="Close">✕</button></div>'+
+        '<div class="modal-b">'+bodyHTML+'</div>'+
+        (acts ? '<div class="modal-f">'+acts+'</div>' : '')+
+      '</div></div>';
+  const root = $('#modalRoot');
+  root.querySelector('[data-mclose]').onclick = closeModal;
+  root.querySelector('[data-mbackdrop]').onclick = e => { if(e.target.hasAttribute('data-mbackdrop')) closeModal(); };
+  (actions||[]).forEach((a,i)=>{
+    root.querySelector('[data-mact="'+i+'"]').onclick = async () => {
+      if(!a.onClick){ closeModal(); return; }
+      const r = await a.onClick();
+      if(r !== false) closeModal();
+    };
+  });
+  if(onMount) onMount(root);
+  const first = root.querySelector('.modal-b input, .modal-b textarea, .modal-b select');
+  if(first) setTimeout(()=>first.focus(),40);
+}
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){
+    if($('#confirmRoot').innerHTML) $('#confirmRoot').innerHTML='';
+    else if($('#modalRoot').innerHTML) closeModal();
+  }
+});
+
+/* ---------- confirm (separate root so it can stack over a form) ---------- */
+function confirmDialog({title, message, confirmLabel, danger, requireText}){
+  return new Promise(resolve=>{
+    const rq = requireText
+      ? '<div style="margin-top:14px"><label class="field"><span class="lab">Type <b class="mono">'+esc(requireText)+
+        '</b> to confirm</span><input class="inp mono" id="cfmText" autocomplete="off" placeholder="'+esc(requireText)+'"></label></div>'
+      : '';
+    $('#confirmRoot').innerHTML =
+      '<div class="backdrop" data-cbd><div class="modal narrow" role="alertdialog" aria-modal="true">'+
+        '<div class="modal-h"><h2>'+esc(title)+'</h2></div>'+
+        '<div class="modal-b"><div class="'+(danger?'warnbox':'infobox')+'">'+message+'</div>'+rq+'</div>'+
+        '<div class="modal-f">'+
+          '<button class="btn" id="cfmNo">Cancel</button>'+
+          '<button class="btn '+(danger?'btn-danger':'btn-primary')+'" id="cfmYes"'+(requireText?' disabled':'')+'>'+
+            esc(confirmLabel||'Confirm')+'</button>'+
+        '</div></div></div>';
+    const root = $('#confirmRoot');
+    const done = v => { root.innerHTML=''; resolve(v); };
+    root.querySelector('#cfmNo').onclick = ()=>done(false);
+    root.querySelector('#cfmYes').onclick = ()=>done(true);
+    root.querySelector('[data-cbd]').onclick = e => { if(e.target.hasAttribute('data-cbd')) done(false); };
+    if(requireText){
+      const t = root.querySelector('#cfmText'), y = root.querySelector('#cfmYes');
+      t.oninput = ()=>{ y.disabled = t.value.trim() !== requireText; };
+      t.onkeydown = e => { if(e.key==='Enter' && !y.disabled) done(true); };
+      setTimeout(()=>t.focus(),50);
+    } else setTimeout(()=>root.querySelector('#cfmYes').focus(),50);
+  });
+}
+
+/* =====================================================================
+   FORM BUILDER
+   ===================================================================== */
+function fieldHTML(f){
+  const req = f.required ? ' <span class="req">*</span>' : '';
+  const lab = '<span class="lab">'+esc(f.label)+req+'</span>';
+  const help = f.help ? '<div class="help">'+esc(f.help)+'</div>' : '';
+  const val = f.value ?? '';
+  let ctrl = '';
+
+  if(f.type === 'textarea'){
+    ctrl = '<textarea class="inp" name="'+esc(f.name)+'" rows="'+(f.rows||4)+'" placeholder="'+esc(f.placeholder||'')+'">'+esc(val)+'</textarea>';
+  } else if(f.type === 'select'){
+    const opts = (f.options||[]).map(o=>'<option value="'+esc(o)+'"'+(String(o)===String(val)?' selected':'')+'>'+esc(o)+'</option>').join('');
+    const blank = f.required ? '' : '<option value=""'+(!val?' selected':'')+'>— none —</option>';
+    ctrl = '<select class="inp" name="'+esc(f.name)+'">'+blank+opts+'</select>';
+    if(f.global && canEdit()){
+      ctrl = '<div class="inline">'+ctrl+
+        '<button type="button" class="btn btn-sm" data-gadd="'+esc(f.global)+'" data-gfor="'+esc(f.name)+'" title="Add a new option to the global list">＋ New</button></div>'+
+        '<div class="addrow hidden" data-growname="'+esc(f.name)+'">'+
+          '<input class="inp" type="text" placeholder="New '+esc(f.label.toLowerCase())+'…" data-gin="'+esc(f.name)+'">'+
+          '<button type="button" class="btn btn-primary btn-sm" data-gsave="'+esc(f.global)+'" data-gfor="'+esc(f.name)+'">Add</button>'+
+          '<button type="button" class="btn btn-sm" data-gcancel data-gfor="'+esc(f.name)+'">Cancel</button>'+
+        '</div>';
+    }
+  } else if(f.type === 'multi'){
+    const sel = new Set((f.value||[]).map(String));
+    const rows = (f.options||[]).map(o=>{
+      const v = typeof o === 'object' ? o.value : o;
+      const l = typeof o === 'object' ? o.label : o;
+      return '<label><input type="checkbox" name="'+esc(f.name)+'" value="'+esc(v)+'"'+(sel.has(String(v))?' checked':'')+'><span>'+esc(l)+'</span></label>';
+    }).join('');
+    ctrl = '<div class="checklist" data-multi="'+esc(f.name)+'">'+(rows || '<div style="padding:12px" class="dim small">Nothing to pick yet.</div>')+'</div>';
+    if(f.global && canEdit()){
+      ctrl += '<div class="inline" style="margin-top:7px">'+
+        '<button type="button" class="btn btn-sm" data-gadd="'+esc(f.global)+'" data-gfor="'+esc(f.name)+'">＋ Add new to global list</button></div>'+
+        '<div class="addrow hidden" data-growname="'+esc(f.name)+'">'+
+          '<input class="inp" type="text" placeholder="New entry…" data-gin="'+esc(f.name)+'">'+
+          '<button type="button" class="btn btn-primary btn-sm" data-gsave="'+esc(f.global)+'" data-gfor="'+esc(f.name)+'">Add</button>'+
+          '<button type="button" class="btn btn-sm" data-gcancel data-gfor="'+esc(f.name)+'">Cancel</button>'+
+        '</div>';
+    }
+  } else {
+    ctrl = '<input class="inp" type="'+(f.type||'text')+'" name="'+esc(f.name)+'" value="'+esc(val)+'" placeholder="'+esc(f.placeholder||'')+'"'+(f.type==='date'?'':'')+'>';
+  }
+  return '<label class="field">'+lab+ctrl+help+'</label>';
+}
+
+function readForm(fields, root){
+  const out = {};
+  for(const f of fields){
+    if(f.type === 'multi'){
+      out[f.name] = $$('[data-multi="'+f.name+'"] input:checked', root).map(i=>i.value);
+    } else {
+      const el = root.querySelector('[name="'+f.name+'"]');
+      out[f.name] = el ? el.value.trim() : '';
+    }
+  }
+  return out;
+}
+
+function openForm({title, fields, submitLabel, onSubmit, size, intro}){
+  const groups = [];
+  let buf = [];
+  for(const f of fields){
+    if(f.half){ buf.push(f); if(buf.length===2){ groups.push('<div class="grid2">'+buf.map(fieldHTML).join('')+'</div>'); buf=[]; } }
+    else { if(buf.length){ groups.push('<div class="grid2">'+buf.map(fieldHTML).join('')+'</div>'); buf=[]; } groups.push(fieldHTML(f)); }
+  }
+  if(buf.length) groups.push('<div class="grid2">'+buf.map(fieldHTML).join('')+'</div>');
+
+  openModal({
+    title, size,
+    bodyHTML: (intro ? '<div class="infobox" style="margin-bottom:16px">'+intro+'</div>' : '') +
+              '<div class="form" id="mform">'+groups.join('')+'</div>',
+    actions:[
+      {label:'Cancel'},
+      {label: submitLabel||'Save', cls:'btn-primary', onClick: ()=>{
+        const root = $('#mform');
+        const v = readForm(fields, root);
+        for(const f of fields){
+          if(f.required && (!v[f.name] || (Array.isArray(v[f.name]) && !v[f.name].length))){
+            toast('"'+f.label+'" is required.', true);
+            const el = root.querySelector('[name="'+f.name+'"]'); if(el) el.focus();
+            return false;
+          }
+        }
+        onSubmit(v);
+        return true;
+      }}
+    ],
+    onMount: root => {
+      // "+ New" global-option handling
+      root.addEventListener('click', e=>{
+        const add = e.target.closest('[data-gadd]');
+        if(add){ const r = root.querySelector('[data-growname="'+add.dataset.gfor+'"]');
+                 r.classList.remove('hidden'); r.querySelector('[data-gin]').focus(); return; }
+        const cancel = e.target.closest('[data-gcancel]');
+        if(cancel){ const r = root.querySelector('[data-growname="'+cancel.dataset.gfor+'"]');
+                    r.classList.add('hidden'); r.querySelector('[data-gin]').value=''; return; }
+        const sv = e.target.closest('[data-gsave]');
+        if(sv){ addGlobalFromForm(root, sv.dataset.gsave, sv.dataset.gfor); return; }
+      });
+      root.addEventListener('keydown', e=>{
+        const inp = e.target.closest('[data-gin]');
+        if(inp && e.key==='Enter'){
+          e.preventDefault();
+          const row = inp.closest('[data-growname]');
+          const sv = row.querySelector('[data-gsave]');
+          addGlobalFromForm(root, sv.dataset.gsave, sv.dataset.gfor);
+        }
+      });
+    }
+  });
+}
+
+function addGlobalFromForm(root, listKey, fieldName){
+  const row = root.querySelector('[data-growname="'+fieldName+'"]');
+  const inp = row.querySelector('[data-gin]');
+  const val = inp.value.trim();
+  if(!val){ toast('Type something first.', true); return; }
+  const list = V().globals[listKey];
+  const exists = list.find(x => x.toLowerCase() === val.toLowerCase());
+  if(!exists){
+    list.push(val);
+    list.sort((a,b)=>a.localeCompare(b));
+    commit('update','global', listKey, null, {list:listKey, added:val}, 'Added "'+val+'" to '+globalLabel(listKey));
+    toast('Added "'+val+'" — it will be in this dropdown from now on.');
+  } else { toast('"'+exists+'" is already in the list.'); }
+  const final = exists || val;
+
+  const sel = root.querySelector('select[name="'+fieldName+'"]');
+  if(sel){
+    if(!Array.from(sel.options).some(o=>o.value===final)){
+      const o = document.createElement('option'); o.value=final; o.textContent=final; sel.appendChild(o);
+    }
+    sel.value = final;
+  }
+  const cl = root.querySelector('[data-multi="'+fieldName+'"]');
+  if(cl){
+    if(!Array.from(cl.querySelectorAll('input')).some(i=>i.value===final)){
+      const l = document.createElement('label');
+      l.innerHTML = '<input type="checkbox" name="'+esc(fieldName)+'" value="'+esc(final)+'" checked><span>'+esc(final)+'</span>';
+      cl.appendChild(l);
+      const ph = cl.querySelector('div.dim'); if(ph) ph.remove();
+    } else {
+      const i = Array.from(cl.querySelectorAll('input')).find(i=>i.value===final); if(i) i.checked = true;
+    }
+  }
+  row.classList.add('hidden'); inp.value='';
+}
+function globalLabel(k){
+  return { b2bTypes:'partnership types', partnerTypes:'partner types', countries:'countries',
+           stages:'stages', itemStatuses:'open-item statuses', priorities:'priorities',
+           institutions:'institutions' }[k] || k;
+}
+
+/* =====================================================================
+   ROUTER
+   ===================================================================== */
+function parseRoute(){
+  const h = (location.hash || '#/dash').replace(/^#/, '');
+  const [path, qs] = h.split('?');
+  return { parts: path.split('/').filter(Boolean), q: new URLSearchParams(qs || '') };
+}
+function nav(to){ location.hash = to; }
+window.addEventListener('hashchange', ()=>{ if(S.vault) render(); });
+
+/* =====================================================================
+   RENDER — shell
+   ===================================================================== */
+function render(){
+  const {parts, q} = parseRoute();
+  const v = V();
+  const overdue = v.openItems.filter(i=>i.status!=='Done' && i.due && daysUntil(i.due)<0).length;
+  const openCount = openOf(v.openItems).length;
+  const page = parts[0] || 'dash';
+
+  const nl = (href, key, icon, label, count, hot) =>
+    '<a class="navlink'+(page===key?' on':'')+'" href="#'+href+'"><span class="ic">'+icon+'</span>'+
+    '<span class="grow truncate">'+label+'</span>'+
+    (count!=null && count>0 ? '<span class="cnt'+(hot?' hot':'')+'">'+count+'</span>':'')+'</a>';
+
+  let body = '';
+  try{
+    switch(page){
+      case 'dash':     body = viewDash(); break;
+      case 'profiles': body = viewProfiles(); break;
+      case 'profile':  body = viewProfile(parts[1], q); break;
+      case 'e':        body = viewEntity(parts[1], parts[2], q); break;
+      case 'items':    body = viewItems(q); break;
+      case 'backups':  body = viewBackups(); break;
+      case 'settings': body = viewSettings(); break;
+      default:         body = '<div class="empty"><div class="big">🤷</div>Page not found. <a href="#/dash">Go to dashboard</a></div>';
+    }
+  }catch(err){
+    console.error(err);
+    body = '<div class="card card-pad"><div class="warnbox"><b>Something went wrong rendering this page.</b><br>'+
+           esc(err.message||String(err))+'<br><br>Your data is safe — go to <a href="#/backups">Backups</a> and export it.</div></div>';
+  }
+
+  $('#app').innerHTML =
+    (S.readOnly ? '<div class="ro-banner">📦 Read-only backup snapshot'+
+        (v.__exportedAt ? ' from '+esc(fmtTS(v.__exportedAt)) : '')+
+        ' — browse freely; to edit, import this file into the live tracker.</div>' : '')+
+    '<header class="topbar">'+
+      '<div class="logo">🧭</div><div class="brandname">Partnership Tracker</div>'+
+      '<div class="searchwrap"><input id="gsearch" type="search" placeholder="Search profiles, partnerships, partners, notes…" autocomplete="off"><div id="sres"></div></div>'+
+      '<div class="grow"></div>'+
+      (S.readOnly ? '' : '<div class="savepill" id="saveState"><span class="dot"></span> Saved</div>')+
+      (S.readOnly ? '' : '<div class="savepill hidden" id="syncState"></div>')+
+      '<button class="btn btn-ghost btn-icon" data-act="theme" title="Light / dark">◐</button>'+
+      (S.readOnly
+        ? '<button class="btn btn-sm" data-act="dl-json">⬇ JSON</button>'
+        : '<button class="btn btn-sm" data-act="lock" title="Lock — you\'ll need your password again">🔒 '+esc(S.user)+'</button>')+
+    '</header>'+
+    '<div class="shell">'+
+      '<nav class="sidebar">'+
+        '<div class="navsec">Workspace</div>'+
+        nl('/dash','dash','▦','Dashboard')+
+        nl('/profiles','profiles','👤','Profiles', v.profiles.length)+
+        nl('/items','items','✓','Open Items', openCount, overdue>0)+
+        '<div class="navsec">Data</div>'+
+        nl('/backups','backups','⛁','Backups & History')+
+        nl('/settings','settings','⚙','Settings')+
+      '</nav>'+
+      '<main class="content">'+body+'</main>'+
+    '</div>';
+
+  paintSaveState();
+  paintSyncState();
+  wireSearch();
+}
+
+/* =====================================================================
+   VIEW — Dashboard
+   ===================================================================== */
+function viewDash(){
+  const v = V();
+  const items = openOf(v.openItems);
+  const overdue = items.filter(i=>i.due && daysUntil(i.due)<0);
+  const soon = items.filter(i=>i.due && daysUntil(i.due)>=0 && daysUntil(i.due)<=7);
+  const live = v.b2b.filter(b=>['Live — sending cases','MoU / Agreement signed'].includes(b.stage)).length;
+  const recent = v.meetings.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,6);
+
+  const stat = (k,val,s,cls,href) =>
+    '<div class="stat '+(cls||'')+(href?' link':'')+'"'+(href?' data-nav="'+href+'"':'')+'>'+
+    '<div class="k">'+k+'</div><div class="v">'+val+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';
+
+  let html =
+    '<div class="page-head"><h1>Dashboard</h1>'+
+    '<div class="muted small">'+(v.owner?esc(v.owner)+' · ':'')+fmtDate(todayISO())+'</div></div>'+
+    '<div class="stats">'+
+      stat('Profiles', v.profiles.length, 'people being tracked', '', '/profiles')+
+      stat('B2B partnerships', v.b2b.length, live+' signed or live', '', '/profiles')+
+      stat('Partners', v.partners.length, 'facilitators & others', '', '/profiles')+
+      stat('Open items', items.length, 'across everything', items.length?'warn':'good', '/items')+
+      stat('Overdue', overdue.length, overdue.length?'need attention now':'nothing late', overdue.length?'hot':'good', '/items?overdue=1')+
+      stat('Due in 7 days', soon.length, 'coming up', '', '/items')+
+    '</div>';
+
+  if(!v.profiles.length){
+    html += '<div class="card"><div class="empty">'+
+      '<div class="big">👤</div><h3>Start with a profile</h3>'+
+      '<p class="muted" style="max-width:430px;margin:8px auto 16px">A profile is the person whose work you are tracking. '+
+      'Inside it you keep their B2B partnerships and their partners.</p>'+
+      (canEdit()?'<button class="btn btn-primary" data-act="new-profile">＋ Create first profile</button>':'')+
+      '</div></div>';
+    return html;
+  }
+
+  // open items preview
+  html += '<div class="card" style="margin-bottom:18px"><div class="card-head">'+
+    '<h2>Open items needing attention</h2>'+
+    '<a class="btn btn-sm" href="#/items">View all '+items.length+' →</a></div>';
+  const top = overdue.concat(soon).concat(items.filter(i=>!i.due)).slice(0,8);
+  if(!top.length) html += '<div class="empty">✓ Nothing open. Clean slate.</div>';
+  else html += itemsTable(top, {showParent:true});
+  html += '</div>';
+
+  // profiles overview
+  html += '<div class="card" style="margin-bottom:18px"><div class="card-head"><h2>Profiles</h2>'+
+    (canEdit()?'<button class="btn btn-sm btn-primary" data-act="new-profile">＋ Profile</button>':'')+'</div>'+
+    '<div class="tablewrap"><table class="tbl"><thead><tr>'+
+    '<th>Name</th><th>Role</th><th>B2B partnerships</th><th>Partners</th><th>Open items</th><th>Last activity</th>'+
+    '</tr></thead><tbody>'+
+    v.profiles.map(p=>{
+      const b = profB2b(p.id).length, pa = profPart(p.id).length;
+      const oi = openOf(v.openItems.filter(i=>i.profileId===p.id)).length;
+      const la = Math.max(p.updatedAt||0, ...v.meetings.filter(m=>m.profileId===p.id)
+                   .map(m=>new Date(m.date+'T00:00:00').getTime()||0), 0);
+      return '<tr><td class="namecell"><a href="#/profile/'+p.id+'">'+esc(p.name)+'</a>'+
+        (p.org?'<div class="sub">'+esc(p.org)+'</div>':'')+'</td>'+
+        '<td>'+esc(p.role||'—')+'</td><td>'+b+'</td><td>'+pa+'</td>'+
+        '<td>'+(oi?'<span class="badge b-amber">'+oi+' open</span>':'<span class="dim">—</span>')+'</td>'+
+        '<td class="dim small">'+(la?relTime(la):'—')+'</td></tr>';
+    }).join('')+
+    '</tbody></table></div></div>';
+
+  // recent meetings
+  html += '<div class="card"><div class="card-head"><h2>Recent meeting notes</h2></div>';
+  if(!recent.length) html += '<div class="empty">No meeting notes logged yet.</div>';
+  else html += '<div class="tablewrap"><table class="tbl"><thead><tr><th>Date</th><th>With</th><th>Subject</th><th>Profile</th></tr></thead><tbody>'+
+    recent.map(m=>{
+      const p = profile(m.profileId);
+      return '<tr><td class="nowrap"><span class="datechip">'+fmtDate(m.date)+'</span></td>'+
+        '<td class="namecell"><a href="#/e/'+m.parentType+'/'+m.parentId+'?tab=meetings">'+esc(entName(m.parentType,m.parentId))+'</a>'+
+        '<div class="sub">'+esc(ENT_LABEL[m.parentType])+'</div></td>'+
+        '<td>'+esc(m.title||'—')+'</td><td class="dim">'+esc(p?p.name:'—')+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  html += '</div>';
+  return html;
+}
+
+/* =====================================================================
+   VIEW — Profiles list
+   ===================================================================== */
+function viewProfiles(){
+  const v = V();
+  let html = '<div class="page-head spread"><div><h1>Profiles</h1>'+
+    '<div class="muted small">The person whose work you are tracking. Each profile holds its own B2B partnerships and partners.</div></div>'+
+    (canEdit()?'<button class="btn btn-primary" data-act="new-profile">＋ New profile</button>':'')+'</div>';
+
+  if(!v.profiles.length)
+    return html + '<div class="card"><div class="empty"><div class="big">👤</div><h3>No profiles yet</h3>'+
+      '<p class="muted">Create one to get going.</p></div></div>';
+
+  html += '<div class="card"><div class="tablewrap"><table class="tbl"><thead><tr>'+
+    '<th>Name</th><th>Role</th><th>Organisation</th><th>Contact</th><th>B2B</th><th>Partners</th><th>Open</th><th></th>'+
+    '</tr></thead><tbody>'+
+    v.profiles.map(p=>{
+      const oi = openOf(v.openItems.filter(i=>i.profileId===p.id)).length;
+      return '<tr><td class="namecell"><a href="#/profile/'+p.id+'">'+esc(p.name)+'</a></td>'+
+      '<td>'+esc(p.role||'—')+'</td><td>'+esc(p.org||'—')+'</td>'+
+      '<td class="small">'+(p.email?esc(p.email):'')+(p.phone?'<div class="sub">'+esc(p.phone)+'</div>':'')+(!p.email&&!p.phone?'<span class="dim">—</span>':'')+'</td>'+
+      '<td>'+profB2b(p.id).length+'</td><td>'+profPart(p.id).length+'</td>'+
+      '<td>'+(oi?'<span class="badge b-amber">'+oi+'</span>':'<span class="dim">0</span>')+'</td>'+
+      '<td class="acts">'+(canEdit()?
+        '<button class="btn btn-ghost btn-sm" data-act="edit-profile" data-id="'+p.id+'">Edit</button>'+
+        '<button class="btn btn-ghost btn-sm" data-act="del-profile" data-id="'+p.id+'" title="Delete">🗑</button>':'')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+  return html;
+}
+
+/* =====================================================================
+   VIEW — Profile detail (2 tabs: B2B Partnerships | Partners)
+   ===================================================================== */
+function viewProfile(pid, q){
+  const p = profile(pid);
+  if(!p) return '<div class="empty"><div class="big">🔍</div>Profile not found. <a href="#/profiles">Back to profiles</a></div>';
+  const tab = q.get('tab') || 'b2b';
+  const b2bs = profB2b(pid), parts = profPart(pid);
+  const openHere = openOf(V().openItems.filter(i=>i.profileId===pid)).length;
+
+  let html =
+    '<div class="page-head">'+
+      '<div class="crumb"><a href="#/profiles">Profiles</a> › '+esc(p.name)+'</div>'+
+      '<div class="spread"><div><h1>'+esc(p.name)+'</h1>'+
+        '<div class="muted small">'+[p.role,p.org,p.region].filter(Boolean).map(esc).join(' · ')+'</div></div>'+
+        '<div class="row">'+
+          (openHere?'<a class="btn btn-sm" href="#/items?profile='+pid+'">✓ '+openHere+' open items</a>':'')+
+          (canEdit()?'<button class="btn btn-sm" data-act="edit-profile" data-id="'+pid+'">Edit profile</button>':'')+
+        '</div></div>'+
+    '</div>';
+
+  if(p.email || p.phone || p.notes){
+    html += '<div class="card card-pad" style="margin-bottom:18px"><dl class="kv">'+
+      (p.email?'<dt>Email</dt><dd>'+esc(p.email)+'</dd>':'')+
+      (p.phone?'<dt>Phone</dt><dd>'+esc(p.phone)+'</dd>':'')+
+      (p.notes?'<dt>Notes</dt><dd><div class="notebox">'+esc(p.notes)+'</div></dd>':'')+
+      '</dl></div>';
+  }
+
+  html += '<div class="tabs">'+
+    '<button class="tab'+(tab==='b2b'?' on':'')+'" data-tab="b2b" data-base="#/profile/'+pid+'">🏢 B2B Partnerships <span class="cnt">'+b2bs.length+'</span></button>'+
+    '<button class="tab'+(tab==='partners'?' on':'')+'" data-tab="partners" data-base="#/profile/'+pid+'">🤝 Partners <span class="cnt">'+parts.length+'</span></button>'+
+    '</div>';
+
+  html += tab==='b2b' ? b2bPane(pid, b2bs) : partnerPane(pid, parts);
+  return html;
+}
+
+function b2bPane(pid, rows){
+  let html = '<div class="card"><div class="card-head">'+
+    '<div><h2>B2B Partnerships</h2><div class="muted tiny">NGOs, insurers, corporates, government bodies — any organisation you are partnering with.</div></div>'+
+    (canEdit()?'<button class="btn btn-primary btn-sm" data-act="new-b2b" data-pid="'+pid+'">＋ Add partnership</button>':'')+'</div>';
+  if(!rows.length) return html + '<div class="empty"><div class="big">🏢</div>No partnerships logged for this profile yet.</div></div>';
+
+  html += '<div class="tablewrap"><table class="tbl"><thead><tr>'+
+    '<th>Organisation</th><th>Type</th><th>Country</th><th>Stage</th><th>Main contact</th><th>Meetings</th><th>Open</th><th>Last activity</th><th></th>'+
+    '</tr></thead><tbody>'+
+    rows.slice().sort((a,b)=>lastActivity('b2b',b.id)-lastActivity('b2b',a.id)).map(r=>{
+      const ms = entMeetings('b2b', r.id).length;
+      const oi = openOf(entItems('b2b', r.id)).length;
+      return '<tr><td class="namecell"><a href="#/e/b2b/'+r.id+'">'+esc(r.name)+'</a>'+
+        (r.website?'<div class="sub">'+esc(r.website)+'</div>':'')+'</td>'+
+        '<td><span class="chip">'+esc(r.type||'—')+'</span></td>'+
+        '<td>'+esc(r.country||'—')+'</td>'+
+        '<td>'+stageBadge(r.stage)+'</td>'+
+        '<td class="small">'+(r.contactName?esc(r.contactName):'<span class="dim">—</span>')+
+          (r.contactEmail?'<div class="sub">'+esc(r.contactEmail)+'</div>':'')+'</td>'+
+        '<td>'+(ms||'<span class="dim">0</span>')+'</td>'+
+        '<td>'+(oi?'<span class="badge b-amber">'+oi+'</span>':'<span class="dim">0</span>')+'</td>'+
+        '<td class="dim small nowrap">'+relTime(lastActivity('b2b',r.id))+'</td>'+
+        '<td class="acts">'+
+          '<button class="btn btn-ghost btn-sm" data-act="open-win" data-t="b2b" data-id="'+r.id+'" title="Open in a new window">⧉</button>'+
+          (canEdit()?'<button class="btn btn-ghost btn-sm" data-act="edit-b2b" data-id="'+r.id+'">Edit</button>'+
+          '<button class="btn btn-ghost btn-sm" data-act="del-b2b" data-id="'+r.id+'" title="Delete">🗑</button>':'')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+  return html;
+}
+
+function partnerPane(pid, rows){
+  let html = '<div class="card"><div class="card-head">'+
+    '<div><h2>Partners</h2><div class="muted tiny">Facilitators, agents, consultants — the people who bring cases. Click a name to open their full record.</div></div>'+
+    (canEdit()?'<button class="btn btn-primary btn-sm" data-act="new-partner" data-pid="'+pid+'">＋ Add partner</button>':'')+'</div>';
+  if(!rows.length) return html + '<div class="empty"><div class="big">🤝</div>No partners logged for this profile yet.</div></div>';
+
+  html += '<div class="tablewrap"><table class="tbl"><thead><tr>'+
+    '<th>Partner</th><th>Type</th><th>Country</th><th>Institutions tied</th><th>Stage</th><th>Meetings</th><th>Open</th><th>Last activity</th><th></th>'+
+    '</tr></thead><tbody>'+
+    rows.slice().sort((a,b)=>lastActivity('partner',b.id)-lastActivity('partner',a.id)).map(r=>{
+      const ms = entMeetings('partner', r.id).length;
+      const oi = openOf(entItems('partner', r.id)).length;
+      const inst = institutionNames(r);
+      return '<tr><td class="namecell"><a href="#/e/partner/'+r.id+'">'+esc(r.name)+'</a>'+
+        (r.org?'<div class="sub">'+esc(r.org)+'</div>':'')+'</td>'+
+        '<td><span class="chip">'+esc(r.type||'—')+'</span></td>'+
+        '<td>'+esc(r.country||'—')+'</td>'+
+        '<td>'+(inst.length
+          ? '<div class="chips">'+inst.slice(0,3).map(n=>'<span class="chip">'+esc(n)+'</span>').join('')+
+            (inst.length>3?'<span class="chip">+'+(inst.length-3)+'</span>':'')+'</div>'
+          : '<span class="dim">—</span>')+'</td>'+
+        '<td>'+stageBadge(r.stage)+'</td>'+
+        '<td>'+(ms||'<span class="dim">0</span>')+'</td>'+
+        '<td>'+(oi?'<span class="badge b-amber">'+oi+'</span>':'<span class="dim">0</span>')+'</td>'+
+        '<td class="dim small nowrap">'+relTime(lastActivity('partner',r.id))+'</td>'+
+        '<td class="acts">'+
+          '<button class="btn btn-ghost btn-sm" data-act="open-win" data-t="partner" data-id="'+r.id+'" title="Open in a new window">⧉</button>'+
+          (canEdit()?'<button class="btn btn-ghost btn-sm" data-act="edit-partner" data-id="'+r.id+'">Edit</button>'+
+          '<button class="btn btn-ghost btn-sm" data-act="del-partner" data-id="'+r.id+'" title="Delete">🗑</button>':'')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+  return html;
+}
+
+function institutionNames(partner){
+  const linked = (partner.linkedB2b||[]).map(id => { const b = entity('b2b', id); return b ? b.name : null; }).filter(Boolean);
+  return linked.concat(partner.institutions || []);
+}
+
+/* =====================================================================
+   VIEW — Entity detail  (the "window" that opens on a name)
+   ===================================================================== */
+function viewEntity(type, id, q){
+  if(type!=='b2b' && type!=='partner')
+    return '<div class="empty">Unknown record type.</div>';
+  const e = entity(type, id);
+  if(!e) return '<div class="empty"><div class="big">🔍</div>Record not found — it may have been deleted. '+
+    '<a href="#/profiles">Back to profiles</a></div>';
+  const p = profile(e.profileId);
+  const tab = q.get('tab') || 'overview';
+  const ms = entMeetings(type, id);
+  const its = entItems(type, id);
+  const openN = openOf(its).length;
+  const hist = V().history.filter(h =>
+      (h.entity===type && h.entityId===id) ||
+      ((h.entity==='meeting'||h.entity==='item') && h.parentId===id));
+
+  let html =
+    '<div class="page-head">'+
+      '<div class="crumb"><a href="#/profiles">Profiles</a> › '+
+        (p?'<a href="#/profile/'+p.id+'?tab='+(type==='b2b'?'b2b':'partners')+'">'+esc(p.name)+'</a>':'—')+
+        ' › '+esc(ENT_LABEL[type])+'</div>'+
+      '<div class="spread"><div>'+
+        '<h1>'+esc(e.name)+'</h1>'+
+        '<div class="row wrap small muted" style="margin-top:4px">'+
+          '<span class="chip">'+esc(e.type||'—')+'</span>'+
+          '<span>📍 '+esc(e.country||'—')+'</span>'+
+          stageBadge(e.stage)+
+        '</div></div>'+
+        '<div class="row">'+
+          '<button class="btn btn-sm" data-act="open-win" data-t="'+type+'" data-id="'+id+'" title="Open this record in its own window">⧉ New window</button>'+
+          (canEdit()?'<button class="btn btn-sm" data-act="edit-'+type+'" data-id="'+id+'">Edit</button>':'')+
+          (canEdit()?'<button class="btn btn-primary btn-sm" data-act="new-meeting" data-t="'+type+'" data-id="'+id+'">＋ Meeting note</button>':'')+
+        '</div></div>'+
+    '</div>';
+
+  const base = '#/e/'+type+'/'+id;
+  html += '<div class="tabs">'+
+    '<button class="tab'+(tab==='overview'?' on':'')+'" data-tab="overview" data-base="'+base+'">Overview</button>'+
+    '<button class="tab'+(tab==='meetings'?' on':'')+'" data-tab="meetings" data-base="'+base+'">🗓 Meeting notes <span class="cnt">'+ms.length+'</span></button>'+
+    '<button class="tab'+(tab==='items'?' on':'')+'" data-tab="items" data-base="'+base+'">✓ Open items <span class="cnt">'+openN+'</span></button>'+
+    '<button class="tab'+(tab==='history'?' on':'')+'" data-tab="history" data-base="'+base+'">⛁ History <span class="cnt">'+hist.length+'</span></button>'+
+    '</div>';
+
+  if(tab==='overview')      html += entityOverview(type, e, p);
+  else if(tab==='meetings') html += meetingsPane(type, id, ms);
+  else if(tab==='items')    html += '<div class="card"><div class="card-head"><h2>Open items</h2>'+
+      (canEdit()?'<button class="btn btn-primary btn-sm" data-act="new-item" data-t="'+type+'" data-id="'+id+'">＋ Add item</button>':'')+'</div>'+
+      (its.length ? itemsTable(its.slice().sort(itemSort), {}) :
+        '<div class="empty"><div class="big">✓</div>No open items for this record.</div>')+'</div>';
+  else                      html += historyPane(hist);
+  return html;
+}
+
+function entityOverview(type, e, p){
+  const v = V();
+  let rel = '';
+  if(type==='partner'){
+    const linked = (e.linkedB2b||[]).map(id=>entity('b2b',id)).filter(Boolean);
+    rel = '<dt>Institutions tied</dt><dd>'+
+      (linked.length || (e.institutions||[]).length
+        ? '<div class="chips">'+
+            linked.map(b=>'<a class="chip" href="#/e/b2b/'+b.id+'">🏢 '+esc(b.name)+'</a>').join('')+
+            (e.institutions||[]).map(n=>'<span class="chip">'+esc(n)+'</span>').join('')+
+          '</div>'
+        : '<span class="dim">None linked yet</span>')+'</dd>';
+  } else {
+    const via = v.partners.filter(pt => (pt.linkedB2b||[]).includes(e.id));
+    rel = '<dt>Partners on this</dt><dd>'+
+      (via.length ? '<div class="chips">'+via.map(pt=>'<a class="chip" href="#/e/partner/'+pt.id+'">🤝 '+esc(pt.name)+'</a>').join('')+'</div>'
+                  : '<span class="dim">No partners linked</span>')+'</dd>';
+  }
+
+  return '<div class="card card-pad"><dl class="kv">'+
+    '<dt>Profile</dt><dd>'+(p?'<a href="#/profile/'+p.id+'">'+esc(p.name)+'</a>':'<span class="dim">—</span>')+'</dd>'+
+    '<dt>Type</dt><dd>'+esc(e.type||'—')+'</dd>'+
+    '<dt>Country</dt><dd>'+esc(e.country||'—')+'</dd>'+
+    (e.city?'<dt>City</dt><dd>'+esc(e.city)+'</dd>':'')+
+    '<dt>Stage</dt><dd>'+stageBadge(e.stage)+'</dd>'+
+    (type==='b2b'&&e.org?'<dt>Parent group</dt><dd>'+esc(e.org)+'</dd>':'')+
+    (type==='partner'&&e.org?'<dt>Organisation</dt><dd>'+esc(e.org)+'</dd>':'')+
+    '<dt>Contact</dt><dd>'+
+      ([e.contactName, e.contactEmail, e.contactPhone].filter(Boolean).map(esc).join(' · ') || '<span class="dim">—</span>')+'</dd>'+
+    (e.website?'<dt>Website</dt><dd>'+linkify(e.website)+'</dd>':'')+
+    (type==='partner'&&e.commission?'<dt>Commission</dt><dd>'+esc(e.commission)+'</dd>':'')+
+    rel+
+    '<dt>Notes</dt><dd>'+(e.notes?'<div class="notebox">'+esc(e.notes)+'</div>':'<span class="dim">—</span>')+'</dd>'+
+    '<dt>Created</dt><dd class="dim small">'+fmtTS(e.createdAt)+(e.updatedAt&&e.updatedAt!==e.createdAt?' · updated '+fmtTS(e.updatedAt):'')+'</dd>'+
+    '</dl></div>';
+}
+function linkify(u){
+  const url = /^https?:\/\//i.test(u) ? u : 'https://'+u;
+  return '<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(u)+' ↗</a>';
+}
+
+/* ---------- meetings ---------- */
+function meetingsPane(type, id, ms){
+  let html = '<div class="card" style="margin-bottom:16px"><div class="card-head">'+
+    '<div><h2>Meeting notes</h2><div class="muted tiny">One entry per meeting — date, what happened, what was decided, what is next.</div></div>'+
+    (canEdit()?'<button class="btn btn-primary btn-sm" data-act="new-meeting" data-t="'+type+'" data-id="'+id+'">＋ Log a meeting</button>':'')+
+    '</div>';
+  if(!ms.length) return html+'<div class="empty"><div class="big">🗓</div>No meetings logged yet. Add one after every call.</div></div>';
+  html += '</div>';
+
+  html += ms.map(m=>
+    '<div class="meeting"><div class="meeting-h">'+
+      '<div class="row wrap"><span class="datechip">'+fmtDate(m.date)+'</span>'+
+        '<b>'+esc(m.title||'Meeting')+'</b>'+
+        (m.mode?'<span class="badge">'+esc(m.mode)+'</span>':'')+'</div>'+
+      '<div class="row">'+(canEdit()?
+        '<button class="btn btn-ghost btn-sm" data-act="edit-meeting" data-id="'+m.id+'">Edit</button>'+
+        '<button class="btn btn-ghost btn-sm" data-act="del-meeting" data-id="'+m.id+'" title="Delete">🗑</button>':'')+'</div>'+
+    '</div><div class="meeting-b">'+
+      (m.attendees?'<div class="mfield"><div class="lab">Attendees</div><div>'+esc(m.attendees)+'</div></div>':'')+
+      (m.notes?'<div class="mfield"><div class="lab">What happened</div><div class="notebox">'+esc(m.notes)+'</div></div>':'')+
+      (m.decisions?'<div class="mfield"><div class="lab">Decisions / outcome</div><div class="notebox">'+esc(m.decisions)+'</div></div>':'')+
+      (m.next?'<div class="mfield"><div class="lab">Next steps</div><div class="notebox">'+esc(m.next)+'</div></div>':'')+
+      '<div class="tiny dim">Logged '+fmtTS(m.createdAt)+(m.updatedAt&&m.updatedAt!==m.createdAt?' · edited '+fmtTS(m.updatedAt):'')+'</div>'+
+    '</div></div>').join('');
+  return html;
+}
+
+/* ---------- open items table ---------- */
+function itemSort(a,b){
+  if((a.status==='Done') !== (b.status==='Done')) return a.status==='Done' ? 1 : -1;
+  const ad = a.due ? daysUntil(a.due) : 99999, bd = b.due ? daysUntil(b.due) : 99999;
+  if(ad !== bd) return ad - bd;
+  const pr = {High:0, Medium:1, Low:2};
+  return (pr[a.priority] ?? 3) - (pr[b.priority] ?? 3);
+}
+function itemsTable(rows, opt){
+  opt = opt || {};
+  return '<div class="tablewrap"><table class="tbl"><thead><tr>'+
+    '<th></th><th>Item</th>'+(opt.showParent?'<th>Against</th>':'')+
+    '<th>Owner</th><th>Due</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>'+
+    rows.map(i=>{
+      const done = i.status==='Done';
+      return '<tr'+(done?' class="done-row"':'')+'>'+
+        '<td style="width:1%">'+(canEdit()
+          ? '<input type="checkbox" data-act="toggle-item" data-id="'+i.id+'"'+(done?' checked':'')+
+            ' style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer" title="Mark done / not done">'
+          : (done?'✓':''))+'</td>'+
+        '<td class="namecell">'+esc(i.title)+
+          (i.notes?'<div class="sub">'+esc(i.notes.length>110?i.notes.slice(0,110)+'…':i.notes)+'</div>':'')+'</td>'+
+        (opt.showParent
+          ? '<td class="small">'+(i.parentId
+              ? '<a href="#/e/'+i.parentType+'/'+i.parentId+'?tab=items">'+esc(entName(i.parentType,i.parentId))+'</a>'+
+                '<div class="sub">'+esc(ENT_LABEL[i.parentType]||'')+'</div>'
+              : '<span class="dim">—</span>')+'</td>'
+          : '')+
+        '<td class="small">'+esc(i.owner||'—')+'</td>'+
+        '<td class="nowrap small">'+dueCell(i)+'</td>'+
+        '<td>'+prioBadge(i.priority)+'</td>'+
+        '<td>'+itemBadge(i.status)+'</td>'+
+        '<td class="acts">'+(canEdit()?
+          '<button class="btn btn-ghost btn-sm" data-act="edit-item" data-id="'+i.id+'">Edit</button>'+
+          '<button class="btn btn-ghost btn-sm" data-act="del-item" data-id="'+i.id+'" title="Delete">🗑</button>':'')+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+}
+
+/* =====================================================================
+   VIEW — Open items (top-level tab)
+   ===================================================================== */
+function viewItems(q){
+  const v = V();
+  const fProfile = q.get('profile') || '';
+  const fStatus  = q.get('status')  || 'open';
+  const fPrio    = q.get('prio')    || '';
+  const fOwner   = q.get('owner')   || '';
+  const overdueOnly = q.get('overdue')==='1';
+
+  let rows = v.openItems.slice();
+  if(fProfile) rows = rows.filter(i=>i.profileId===fProfile);
+  if(fStatus==='open') rows = rows.filter(i=>i.status!=='Done');
+  else if(fStatus && fStatus!=='all') rows = rows.filter(i=>i.status===fStatus);
+  if(fPrio) rows = rows.filter(i=>i.priority===fPrio);
+  if(fOwner) rows = rows.filter(i=>(i.owner||'').toLowerCase().includes(fOwner.toLowerCase()));
+  if(overdueOnly) rows = rows.filter(i=>i.status!=='Done' && i.due && daysUntil(i.due)<0);
+  rows.sort(itemSort);
+
+  const all = v.openItems;
+  const openN = openOf(all).length;
+  const overN = all.filter(i=>i.status!=='Done' && i.due && daysUntil(i.due)<0).length;
+
+  const opt = (val,label,cur) => '<option value="'+esc(val)+'"'+(String(cur)===String(val)?' selected':'')+'>'+esc(label)+'</option>';
+
+  let html = '<div class="page-head spread"><div><h1>Open Items</h1>'+
+    '<div class="muted small">Everything outstanding across every profile, partnership and partner — '+
+    openN+' open'+(overN?', <b class="due-over">'+overN+' overdue</b>':'')+'.</div></div>'+
+    (canEdit()?'<button class="btn btn-primary" data-act="new-item-any">＋ New item</button>':'')+'</div>';
+
+  html += '<div class="filters">'+
+    '<select class="inp" data-filter="profile">'+opt('','All profiles',fProfile)+
+      v.profiles.map(p=>opt(p.id,p.name,fProfile)).join('')+'</select>'+
+    '<select class="inp" data-filter="status">'+
+      opt('open','Open only',fStatus)+opt('all','All statuses',fStatus)+
+      v.globals.itemStatuses.map(s=>opt(s,s,fStatus)).join('')+'</select>'+
+    '<select class="inp" data-filter="prio">'+opt('','Any priority',fPrio)+
+      v.globals.priorities.map(s=>opt(s,s,fPrio)).join('')+'</select>'+
+    '<input class="inp" data-filter="owner" type="search" placeholder="Owner contains…" value="'+esc(fOwner)+'">'+
+    '<label class="row small" style="gap:6px;cursor:pointer"><input type="checkbox" data-filter="overdue"'+(overdueOnly?' checked':'')+
+      ' style="width:15px;height:15px;accent-color:var(--accent)"> Overdue only</label>'+
+    '<button class="btn btn-sm btn-ghost" data-act="clear-filters">Clear</button>'+
+    '</div>';
+
+  html += '<div class="card">'+
+    (rows.length ? itemsTable(rows, {showParent:true})
+                 : '<div class="empty"><div class="big">✓</div>Nothing matches these filters.</div>')+
+    '</div>';
+  return html;
+}
+
+/* =====================================================================
+   VIEW — Backups & History
+   ===================================================================== */
+function viewBackups(){
+  const v = V();
+  const size = new Blob([JSON.stringify(v)]).size;
+  let html = '<div class="page-head"><h1>Backups & History</h1>'+
+    '<div class="muted small">Every add, edit and delete is recorded and can be rolled back. Export regularly — there is no server holding a copy for you.</div></div>';
+
+  html += '<div class="card" style="margin-bottom:18px"><div class="card-head"><h2>Export</h2></div><div class="card-pad">'+
+    '<div class="row wrap" style="gap:9px;margin-bottom:12px">'+
+      '<button class="btn btn-primary" data-act="export-html">⬇ Export backup (.html)</button>'+
+      '<button class="btn" data-act="export-json">⬇ Export data (.json)</button>'+
+      (canEdit()?'<button class="btn" data-act="import">⬆ Import / restore…</button>':'')+
+      (canEdit()?'<button class="btn" data-act="snapshot-now">＋ Take snapshot now</button>':'')+
+    '</div>'+
+    '<div class="amberbox">The <b>.html</b> backup is the whole tracker plus your data in one file — double-click it and it opens '+
+    'as a fully browsable read-only copy, no internet or login needed. Keep it somewhere safe: it is <b>unencrypted</b>, '+
+    'so treat it like any confidential document.</div>'+
+    '<div class="muted small" style="margin-top:12px">Vault size: <b>'+bytes(size)+'</b> · '+
+    v.history.length+' change records · '+v.snapshots.length+' snapshots · browser limit is roughly 5 MB.</div>'+
+    '</div></div>';
+
+  // snapshots
+  html += '<div class="card" style="margin-bottom:18px"><div class="card-head"><h2>Snapshots</h2>'+
+    '<span class="muted tiny">Full copies of everything, taken automatically every 6 hours of activity (last '+MAX_SNAPSHOTS+' kept)</span></div>';
+  if(!v.snapshots.length) html += '<div class="empty">No snapshots yet.</div>';
+  else html += '<div class="tablewrap"><table class="tbl"><thead><tr><th>Taken</th><th>Label</th><th>Size</th><th></th></tr></thead><tbody>'+
+    v.snapshots.map(s=>'<tr><td class="nowrap">'+fmtTS(s.ts)+'<div class="sub">'+relTime(s.ts)+'</div></td>'+
+      '<td>'+esc(s.label)+'</td><td class="dim small">'+bytes(s.json.length)+'</td>'+
+      '<td class="acts">'+
+        '<button class="btn btn-ghost btn-sm" data-act="dl-snapshot" data-id="'+s.id+'">⬇ Download</button>'+
+        (canEdit()?'<button class="btn btn-ghost btn-sm" data-act="restore-snapshot" data-id="'+s.id+'">↶ Restore</button>'+
+        '<button class="btn btn-ghost btn-sm" data-act="del-snapshot" data-id="'+s.id+'" title="Delete">🗑</button>':'')+
+      '</td></tr>').join('')+'</tbody></table></div>';
+  html += '</div>';
+
+  // change history
+  html += '<div class="card"><div class="card-head"><h2>Change history</h2>'+
+    '<span class="muted tiny">Last '+MAX_HISTORY+' changes, newest first</span></div><div class="card-pad">'+
+    (v.history.length ? historyPane(v.history.slice(0,200), true)
+                      : '<div class="empty">Nothing changed yet.</div>')+'</div></div>';
+  return html;
+}
+
+function historyPane(hist, bare){
+  if(!hist.length) return (bare?'':'<div class="card">')+'<div class="empty"><div class="big">⛁</div>No history for this record yet.</div>'+(bare?'':'</div>');
+  const verb = {create:'Added', update:'Changed', delete:'Deleted'};
+  const inner = '<div class="hist">'+hist.map(h=>{
+    const restorable = canEdit() && h.entity!=='global';
+    return '<div class="hist-i" data-a="'+esc(h.action)+'">'+
+      '<div class="spread"><div class="grow">'+
+        '<b>'+esc(verb[h.action]||h.action)+'</b> '+
+        '<span class="badge">'+esc(entityWord(h.entity))+'</span> '+
+        esc(h.label || (h.after&&h.after.name) || (h.before&&h.before.name) || '')+
+        '<div class="tiny dim" style="margin-top:3px">'+fmtTS(h.ts)+' · '+relTime(h.ts)+'</div>'+
+      '</div>'+
+      (restorable?'<button class="btn btn-ghost btn-sm" data-act="restore-hist" data-id="'+h.id+'">↶ Undo</button>':'')+
+      '</div></div>';
+  }).join('')+'</div>';
+  return bare ? inner : '<div class="card card-pad">'+inner+'</div>';
+}
+function entityWord(e){
+  return {profile:'profile', b2b:'partnership', partner:'partner', meeting:'meeting note',
+          item:'open item', global:'dropdown list', bulk:'bulk'}[e] || e;
+}
+
+/* =====================================================================
+   VIEW — Settings
+   ===================================================================== */
+function viewSettings(){
+  const v = V();
+  const a = readAccounts()[S.user] || {};
+  const lists = [['b2bTypes','B2B partnership types'],['partnerTypes','Partner types'],['countries','Countries'],
+                 ['stages','Stages'],['institutions','Institutions'],['priorities','Priorities'],['itemStatuses','Open-item statuses']];
+
+  let html = '<div class="page-head"><h1>Settings</h1></div>';
+
+  html += '<div class="card" style="margin-bottom:18px"><div class="card-head"><h2>Account</h2></div><div class="card-pad">'+
+    '<dl class="kv">'+
+      '<dt>Signed in as</dt><dd><b>'+esc(S.user)+'</b></dd>'+
+      '<dt>Owner name</dt><dd>'+esc(v.owner||'—')+' '+(canEdit()?'<button class="btn btn-ghost btn-sm" data-act="edit-owner">Change</button>':'')+'</dd>'+
+      '<dt>Created</dt><dd class="small dim">'+fmtTS(a.createdAt)+'</dd>'+
+      '<dt>Encryption</dt><dd class="small">AES-256-GCM, key from PBKDF2-SHA256 ('+(a.iter||PBKDF2_ITER).toLocaleString()+' iterations)</dd>'+
+    '</dl>'+
+    (canEdit()?'<div class="row wrap" style="margin-top:14px"><button class="btn" data-act="change-pw">Change password</button></div>':'')+
+    '</div></div>';
+
+  html += '<div class="card" style="margin-bottom:18px"><div class="card-head">'+
+    '<div><h2>Global dropdown lists</h2><div class="muted tiny">Anything added here shows up in every dropdown, everywhere, from now on.</div></div></div>'+
+    '<div class="card-pad" style="display:grid;gap:18px">'+
+    lists.map(([k,label])=>
+      '<div><div class="spread" style="margin-bottom:8px"><h3>'+esc(label)+' <span class="badge">'+v.globals[k].length+'</span></h3>'+
+      (canEdit()?'<button class="btn btn-sm" data-act="glist-add" data-k="'+k+'">＋ Add</button>':'')+'</div>'+
+      (v.globals[k].length
+        ? '<div class="chips">'+v.globals[k].map(x=>
+            '<span class="chip">'+esc(x)+(canEdit()
+              ? ' <button class="btn-ghost" data-act="glist-del" data-k="'+k+'" data-v="'+esc(x)+'" '+
+                'style="border:0;background:none;cursor:pointer;padding:0 0 0 3px;color:var(--text-3)" title="Remove">✕</button>'
+              : '')+'</span>').join('')+'</div>'
+        : '<div class="dim small">Empty — add entries as you go.</div>')+
+      '</div>').join('')+
+    '</div></div>';
+
+  const gistLink = SY.gistId ? 'https://gist.github.com/' + SY.gistId : '';
+  html += '<div class="card" style="margin-bottom:18px"><div class="card-head">'+
+    '<div><h2>Cloud sync <span class="badge '+(SY.token?'b-green':'')+'">'+(SY.token?'On':'Off')+'</span></h2>'+
+    '<div class="muted tiny">Use the same data on your phone and other computers. Only encrypted bytes leave this device.</div></div></div>'+
+    '<div class="card-pad">'+
+    (SY.token
+      ? '<dl class="kv">'+
+          '<dt>This device</dt><dd class="mono small">'+esc(deviceName())+'</dd>'+
+          '<dt>Gist</dt><dd class="small"><a href="'+esc(gistLink)+'" target="_blank" rel="noopener noreferrer">'+
+            esc(SY.gistId||'—')+' ↗</a><div class="sub">Paste this ID on another device to join it.</div></dd>'+
+          '<dt>Last synced</dt><dd class="small">'+(SY.lastSyncAt?esc(fmtTS(SY.lastSyncAt)):'<span class="dim">never</span>')+'</dd>'+
+          (SY.error?'<dt>Last error</dt><dd class="small" style="color:var(--danger)">'+esc(SY.error)+'</dd>':'')+
+        '</dl>'+
+        (canEdit()?'<div class="row wrap" style="margin-top:14px">'+
+          '<button class="btn btn-primary" data-act="sync-now">↑ Push now</button>'+
+          '<button class="btn" data-act="sync-pull">↓ Pull now</button>'+
+          '<button class="btn btn-danger" data-act="sync-disconnect">Turn off sync</button>'+
+        '</div>':'')
+      : '<div class="infobox" style="margin-bottom:14px">Sync is <b>off</b>. Your data lives only in this browser, '+
+        'so another device signing in with the same password would see an empty tracker.<br><br>'+
+        'Turning it on stores your <b>already-encrypted</b> vault in a <b>private gist</b>. GitHub cannot read it — '+
+        'the key is derived from your password and never leaves this browser.</div>'+
+        (canEdit()?'<button class="btn btn-primary" data-act="sync-connect">☁ Turn on cloud sync</button>':''))+
+    '</div></div>';
+
+  html += '<div class="card" style="margin-bottom:18px"><div class="card-head"><h2>Appearance</h2></div>'+
+    '<div class="card-pad"><button class="btn" data-act="theme">◐ Toggle light / dark</button></div></div>';
+
+  if(canEdit()){
+    html += '<div class="card" style="border-color:var(--danger)"><div class="card-head" style="border-color:var(--danger)">'+
+      '<h2 style="color:var(--danger)">Danger zone</h2></div><div class="card-pad">'+
+      '<div class="warnbox" style="margin-bottom:14px">These cannot be undone. Export a backup first.</div>'+
+      '<div class="row wrap">'+
+        '<button class="btn btn-danger" data-act="wipe-data">Delete all tracker data</button>'+
+        '<button class="btn btn-danger" data-act="delete-account">Delete this account entirely</button>'+
+      '</div></div></div>';
+  }
+  return html;
+}
+
+/* =====================================================================
+   FORMS — entity CRUD
+   ===================================================================== */
+function profileForm(p){
+  const isNew = !p;
+  openForm({
+    title: isNew ? 'New profile' : 'Edit profile',
+    submitLabel: isNew ? 'Create profile' : 'Save changes',
+    intro: isNew ? 'A profile is <b>the person whose work you are tracking</b>. Their B2B partnerships and partners live inside it.' : '',
+    fields:[
+      {name:'name', label:'Full name', required:true, value:p&&p.name, placeholder:'e.g. Nitesh Kumar'},
+      {name:'role', label:'Role / designation', half:true, value:p&&p.role, placeholder:'e.g. Business Development'},
+      {name:'org',  label:'Organisation / team', half:true, value:p&&p.org, placeholder:'e.g. Divinheal'},
+      {name:'email',label:'Email', type:'email', half:true, value:p&&p.email},
+      {name:'phone',label:'Phone', type:'tel', half:true, value:p&&p.phone},
+      {name:'region',label:'Region / markets covered', value:p&&p.region, placeholder:'e.g. East Africa, Gulf'},
+      {name:'notes',label:'Notes', type:'textarea', value:p&&p.notes, rows:3}
+    ],
+    onSubmit(v){
+      if(isNew){
+        const rec = Object.assign({id:uid(), createdAt:Date.now(), updatedAt:Date.now()}, v);
+        V().profiles.push(rec);
+        commit('create','profile',rec.id,null,rec,rec.name);
+        toast('Profile created.');
+        nav('/profile/'+rec.id);
+      } else {
+        const before = clone(p);
+        Object.assign(p, v, {updatedAt:Date.now()});
+        commit('update','profile',p.id,before,clone(p),p.name);
+        toast('Profile updated.');
+      }
+      render();
+    }
+  });
+}
+
+function b2bForm(pid, rec){
+  const g = V().globals, isNew = !rec;
+  openForm({
+    title: isNew ? 'New B2B partnership' : 'Edit partnership',
+    submitLabel: isNew ? 'Add partnership' : 'Save changes',
+    size:'wide',
+    fields:[
+      {name:'name', label:'Organisation name', required:true, value:rec&&rec.name, placeholder:'e.g. Jubilee Health Insurance'},
+      {name:'type', label:'Partnership type', type:'select', options:g.b2bTypes, value:rec&&rec.type, half:true,
+        global:'b2bTypes', help:'Missing a type? Use ＋ New — it is saved globally and appears here next time.'},
+      {name:'country', label:'Country', type:'select', options:g.countries, value:rec&&rec.country, half:true, global:'countries'},
+      {name:'city', label:'City', half:true, value:rec&&rec.city},
+      {name:'stage', label:'Stage', type:'select', options:g.stages, value:(rec&&rec.stage)||'Identified', half:true, global:'stages'},
+      {name:'org', label:'Parent group / network', value:rec&&rec.org, placeholder:'optional'},
+      {name:'contactName', label:'Main contact', half:true, value:rec&&rec.contactName},
+      {name:'contactRole', label:'Their role', half:true, value:rec&&rec.contactRole},
+      {name:'contactEmail', label:'Contact email', type:'email', half:true, value:rec&&rec.contactEmail},
+      {name:'contactPhone', label:'Contact phone', type:'tel', half:true, value:rec&&rec.contactPhone},
+      {name:'website', label:'Website', value:rec&&rec.website, placeholder:'jubileeinsurance.com'},
+      {name:'notes', label:'Notes', type:'textarea', value:rec&&rec.notes, rows:4,
+        placeholder:'Why they matter, what they want, blockers, commercials…'}
+    ],
+    onSubmit(v){
+      if(isNew){
+        const r = Object.assign({id:uid(), profileId:pid, createdAt:Date.now(), updatedAt:Date.now()}, v);
+        V().b2b.push(r);
+        commit('create','b2b',r.id,null,r,r.name);
+        toast('Partnership added.');
+      } else {
+        const before = clone(rec);
+        Object.assign(rec, v, {updatedAt:Date.now()});
+        commit('update','b2b',rec.id,before,clone(rec),rec.name);
+        toast('Partnership updated.');
+      }
+      render();
+    }
+  });
+}
+
+function partnerForm(pid, rec){
+  const g = V().globals, isNew = !rec;
+  const b2bOpts = profB2b(pid).map(b=>({value:b.id, label:b.name+' — '+(b.type||'')+(b.country?' ('+b.country+')':'')}));
+  openForm({
+    title: isNew ? 'New partner' : 'Edit partner',
+    submitLabel: isNew ? 'Add partner' : 'Save changes',
+    size:'wide',
+    fields:[
+      {name:'name', label:'Partner name', required:true, value:rec&&rec.name, placeholder:'e.g. Al Daly'},
+      {name:'type', label:'Partner type', type:'select', options:g.partnerTypes, value:rec&&rec.type, half:true,
+        global:'partnerTypes', help:'Facilitator, consultant, agent… ＋ New adds it globally.'},
+      {name:'country', label:'Country', type:'select', options:g.countries, value:rec&&rec.country, half:true, global:'countries'},
+      {name:'city', label:'City', half:true, value:rec&&rec.city},
+      {name:'stage', label:'Stage', type:'select', options:g.stages, value:(rec&&rec.stage)||'Identified', half:true, global:'stages'},
+      {name:'org', label:'Organisation / company', value:rec&&rec.org},
+      {name:'contactEmail', label:'Email', type:'email', half:true, value:rec&&rec.contactEmail},
+      {name:'contactPhone', label:'Phone / WhatsApp', type:'tel', half:true, value:rec&&rec.contactPhone},
+      {name:'commission', label:'Commission / terms', value:rec&&rec.commission, placeholder:'e.g. 40% of received commission ≤$10k, 50% above'},
+      {name:'linkedB2b', label:'Institutions we are tying this partner with', type:'multi', options:b2bOpts,
+        value:rec&&rec.linkedB2b, help:'Tick the B2B partnerships in this profile that this partner is being connected to.'},
+      {name:'institutions', label:'Other institutions (not tracked as B2B)', type:'multi',
+        options:g.institutions, value:rec&&rec.institutions, global:'institutions',
+        help:'Hospitals or bodies you have not created a B2B record for. ＋ adds to the global list.'},
+      {name:'notes', label:'Notes', type:'textarea', value:rec&&rec.notes, rows:4,
+        placeholder:'How they source, their reach, what they need from us…'}
+    ],
+    onSubmit(v){
+      if(isNew){
+        const r = Object.assign({id:uid(), profileId:pid, createdAt:Date.now(), updatedAt:Date.now()}, v);
+        V().partners.push(r);
+        commit('create','partner',r.id,null,r,r.name);
+        toast('Partner added.');
+      } else {
+        const before = clone(rec);
+        Object.assign(rec, v, {updatedAt:Date.now()});
+        commit('update','partner',rec.id,before,clone(rec),rec.name);
+        toast('Partner updated.');
+      }
+      render();
+    }
+  });
+}
+
+function meetingForm(type, parentId, rec){
+  const isNew = !rec;
+  const e = entity(type, parentId || (rec && rec.parentId));
+  openForm({
+    title: (isNew?'Log a meeting — ':'Edit meeting — ') + (e?e.name:''),
+    submitLabel: isNew ? 'Save meeting note' : 'Save changes',
+    size:'wide',
+    fields:[
+      {name:'date', label:'Date of meeting', type:'date', required:true, half:true, value:(rec&&rec.date)||todayISO()},
+      {name:'mode', label:'Mode', type:'select', half:true, options:['In person','Call','Video call','WhatsApp','Email'],
+        value:(rec&&rec.mode)||'Call'},
+      {name:'title', label:'Subject', value:rec&&rec.title, placeholder:'e.g. Commercial terms discussion'},
+      {name:'attendees', label:'Who was there', value:rec&&rec.attendees, placeholder:'Names, both sides'},
+      {name:'notes', label:'What happened', type:'textarea', rows:6, value:rec&&rec.notes,
+        placeholder:'What was discussed, what they said, what you observed…'},
+      {name:'decisions', label:'Decisions / outcome', type:'textarea', rows:3, value:rec&&rec.decisions},
+      {name:'next', label:'Next steps', type:'textarea', rows:3, value:rec&&rec.next},
+      {name:'actionItems', label:'Action items → creates open items', type:'textarea', rows:3, value:'',
+        placeholder:'One per line, e.g.\nSend oncology pricing pack\nChase MoU draft from their legal',
+        help:'Each non-empty line becomes an open item against this record and shows on the Open Items tab.'}
+    ],
+    onSubmit(v){
+      const actions = (v.actionItems||'').split('\n').map(s=>s.trim()).filter(Boolean);
+      delete v.actionItems;
+      let mid;
+      if(isNew){
+        const r = Object.assign({id:uid(), parentType:type, parentId, profileId:e?e.profileId:null,
+                                 createdAt:Date.now(), updatedAt:Date.now()}, v);
+        V().meetings.push(r); mid = r.id;
+        commit('create','meeting',r.id,null,r,(r.title||'Meeting')+' · '+fmtDate(r.date));
+        toast('Meeting note saved.');
+      } else {
+        const before = clone(rec);
+        Object.assign(rec, v, {updatedAt:Date.now()});
+        mid = rec.id;
+        commit('update','meeting',rec.id,before,clone(rec),(rec.title||'Meeting')+' · '+fmtDate(rec.date));
+        toast('Meeting note updated.');
+      }
+      const m = byId(V().meetings, mid);
+      actions.forEach(t=>{
+        const item = { id:uid(), parentType:m.parentType, parentId:m.parentId, profileId:m.profileId,
+          title:t, owner:'', due:'', priority:'Medium', status:'Open',
+          notes:'From meeting on '+fmtDate(m.date)+(m.title?' — '+m.title:''),
+          createdAt:Date.now(), updatedAt:Date.now(), fromMeeting:m.id };
+        V().openItems.push(item);
+        commit('create','item',item.id,null,item,t);
+      });
+      if(actions.length) toast(actions.length+' open item'+(actions.length>1?'s':'')+' created.');
+      render();
+    }
+  });
+}
+
+function itemForm(type, parentId, rec){
+  const g = V().globals, isNew = !rec;
+  const fixed = !!(type && parentId);
+  const targets = [];
+  if(!fixed){
+    V().profiles.forEach(p=>{
+      profB2b(p.id).forEach(b=>targets.push({value:'b2b:'+b.id, label:p.name+' › 🏢 '+b.name}));
+      profPart(p.id).forEach(pt=>targets.push({value:'partner:'+pt.id, label:p.name+' › 🤝 '+pt.name}));
+    });
+  }
+  const fields = [];
+  if(!fixed){
+    fields.push({name:'target', label:'Against which record', type:'select', required:true,
+      options: targets.map(t=>t.label), value: rec ? labelForTarget(rec) : '',
+      help: targets.length ? '' : 'Create a partnership or partner first.'});
+  }
+  fields.push(
+    {name:'title', label:'Item', required:true, value:rec&&rec.title, placeholder:'e.g. Send signed MoU to their legal team'},
+    {name:'owner', label:'Owner', half:true, value:rec&&rec.owner, placeholder:'Who is doing it'},
+    {name:'due', label:'Due date', type:'date', half:true, value:rec&&rec.due},
+    {name:'priority', label:'Priority', type:'select', options:g.priorities, value:(rec&&rec.priority)||'Medium', half:true, global:'priorities'},
+    {name:'status', label:'Status', type:'select', options:g.itemStatuses, value:(rec&&rec.status)||'Open', half:true, required:true, global:'itemStatuses'},
+    {name:'notes', label:'Notes', type:'textarea', rows:3, value:rec&&rec.notes}
+  );
+
+  openForm({
+    title: isNew ? 'New open item' : 'Edit open item',
+    submitLabel: isNew ? 'Add item' : 'Save changes',
+    fields,
+    onSubmit(v){
+      let t = type, pid2 = parentId, prof = null;
+      if(!fixed){
+        const hit = targets.find(x=>x.label===v.target);
+        if(!hit){ toast('Pick a record.', true); return; }
+        const [tt, ii] = hit.value.split(':'); t = tt; pid2 = ii;
+      }
+      const par = entity(t, pid2); prof = par ? par.profileId : null;
+      delete v.target;
+      if(isNew){
+        const r = Object.assign({id:uid(), parentType:t, parentId:pid2, profileId:prof,
+                                 createdAt:Date.now(), updatedAt:Date.now()}, v);
+        if(r.status==='Done') r.closedAt = Date.now();
+        V().openItems.push(r);
+        commit('create','item',r.id,null,r,r.title);
+        toast('Open item added.');
+      } else {
+        const before = clone(rec);
+        Object.assign(rec, v, {parentType:t, parentId:pid2, profileId:prof, updatedAt:Date.now()});
+        rec.closedAt = rec.status==='Done' ? (rec.closedAt || Date.now()) : null;
+        commit('update','item',rec.id,before,clone(rec),rec.title);
+        toast('Open item updated.');
+      }
+      render();
+    }
+  });
+}
+function labelForTarget(item){
+  const p = profile(item.profileId), e = entity(item.parentType, item.parentId);
+  if(!e) return '';
+  return (p?p.name:'?')+' › '+(item.parentType==='b2b'?'🏢 ':'🤝 ')+e.name;
+}
+
+/* =====================================================================
+   DELETES (all confirmed)
+   ===================================================================== */
+async function delProfile(id){
+  const p = profile(id); if(!p) return;
+  const b = profB2b(id), pa = profPart(id);
+  const ms = V().meetings.filter(m=>m.profileId===id);
+  const it = V().openItems.filter(i=>i.profileId===id);
+  const ok = await confirmDialog({
+    title:'Delete profile?', danger:true, confirmLabel:'Delete everything',
+    message:'<b>'+esc(p.name)+'</b> will be deleted along with:<br>'+
+      '• '+b.length+' B2B partnership(s)<br>• '+pa.length+' partner(s)<br>'+
+      '• '+ms.length+' meeting note(s)<br>• '+it.length+' open item(s)<br><br>'+
+      'A full copy is kept in <b>Backups → Change history</b>, so you can undo this.',
+    requireText: (b.length+pa.length+ms.length+it.length) > 0 ? 'DELETE' : null
+  });
+  if(!ok) return;
+  const bundle = { profile:clone(p), b2b:clone(b), partners:clone(pa), meetings:clone(ms), openItems:clone(it) };
+  const v = V();
+  v.profiles = v.profiles.filter(x=>x.id!==id);
+  v.b2b = v.b2b.filter(x=>x.profileId!==id);
+  v.partners = v.partners.filter(x=>x.profileId!==id);
+  v.meetings = v.meetings.filter(x=>x.profileId!==id);
+  v.openItems = v.openItems.filter(x=>x.profileId!==id);
+  commit('delete','profile',id,p,null,p.name,bundle);
+  toast('Profile deleted — undo from Backups.');
+  nav('/profiles'); render();
+}
+
+async function delEntity(type, id){
+  const e = entity(type,id); if(!e) return;
+  const ms = entMeetings(type,id), it = entItems(type,id);
+  const ok = await confirmDialog({
+    title:'Delete '+ENT_LABEL[type].toLowerCase()+'?', danger:true, confirmLabel:'Delete',
+    message:'<b>'+esc(e.name)+'</b> will be deleted along with '+ms.length+' meeting note(s) and '+
+      it.length+' open item(s).<br><br>A copy is kept in <b>Backups → Change history</b> so you can undo it.',
+    requireText: (ms.length+it.length) > 3 ? 'DELETE' : null
+  });
+  if(!ok) return;
+  const bundle = { meetings:clone(ms), openItems:clone(it) };
+  const v = V();
+  const pid = e.profileId;
+  if(type==='b2b'){
+    v.b2b = v.b2b.filter(x=>x.id!==id);
+    v.partners.forEach(p=>{ if(p.linkedB2b) p.linkedB2b = p.linkedB2b.filter(x=>x!==id); });
+  } else {
+    v.partners = v.partners.filter(x=>x.id!==id);
+  }
+  v.meetings = v.meetings.filter(m=>!(m.parentType===type && m.parentId===id));
+  v.openItems = v.openItems.filter(i=>!(i.parentType===type && i.parentId===id));
+  commit('delete',type,id,e,null,e.name,bundle);
+  toast(ENT_LABEL[type]+' deleted — undo from Backups.');
+  nav('/profile/'+pid+'?tab='+(type==='b2b'?'b2b':'partners')); render();
+}
+
+async function delMeeting(id){
+  const m = byId(V().meetings,id); if(!m) return;
+  const ok = await confirmDialog({ title:'Delete meeting note?', danger:true, confirmLabel:'Delete note',
+    message:'The note from <b>'+fmtDate(m.date)+'</b>'+(m.title?' — "'+esc(m.title)+'"':'')+' will be removed.<br><br>Undo is available in Backups.' });
+  if(!ok) return;
+  V().meetings = V().meetings.filter(x=>x.id!==id);
+  commit('delete','meeting',id,m,null,(m.title||'Meeting')+' · '+fmtDate(m.date));
+  toast('Meeting note deleted.'); render();
+}
+
+async function delItem(id){
+  const i = byId(V().openItems,id); if(!i) return;
+  const ok = await confirmDialog({ title:'Delete open item?', danger:true, confirmLabel:'Delete item',
+    message:'<b>'+esc(i.title)+'</b> will be removed.<br><br>Undo is available in Backups.' });
+  if(!ok) return;
+  V().openItems = V().openItems.filter(x=>x.id!==id);
+  commit('delete','item',id,i,null,i.title);
+  toast('Open item deleted.'); render();
+}
+
+/* =====================================================================
+   RESTORE FROM HISTORY
+   ===================================================================== */
+async function restoreHistory(hid){
+  const v = V();
+  const h = byId(v.history, hid); if(!h) return;
+  const verb = {create:'remove the record that was added', update:'roll back to the previous version',
+                delete:'bring the deleted record back'}[h.action];
+  const ok = await confirmDialog({ title:'Undo this change?', confirmLabel:'Undo it',
+    message:'This will <b>'+verb+'</b> for '+esc(entityWord(h.entity))+
+      ' “'+esc(h.label||'')+'”, as it was on '+esc(fmtTS(h.ts))+'.' });
+  if(!ok) return;
+
+  const coll = { profile:'profiles', b2b:'b2b', partner:'partners', meeting:'meetings', item:'openItems' }[h.entity];
+  if(!coll){ toast('That change cannot be undone automatically.', true); return; }
+
+  if(h.action === 'create'){
+    v[coll] = v[coll].filter(x=>x.id !== h.entityId);
+  } else if(h.action === 'update'){
+    const i = v[coll].findIndex(x=>x.id === h.entityId);
+    if(i >= 0) v[coll][i] = clone(h.before); else v[coll].push(clone(h.before));
+  } else if(h.action === 'delete'){
+    if(!v[coll].some(x=>x.id===h.entityId)) v[coll].push(clone(h.before));
+    if(h.bundle){
+      const add = (arr, list) => (list||[]).forEach(r=>{ if(!arr.some(x=>x.id===r.id)) arr.push(clone(r)); });
+      add(v.b2b, h.bundle.b2b); add(v.partners, h.bundle.partners);
+      add(v.meetings, h.bundle.meetings); add(v.openItems, h.bundle.openItems);
+    }
+  }
+  commit('update','bulk', h.entityId, null, null, 'Undid: '+(h.label||entityWord(h.entity)));
+  toast('Change undone.'); render();
+}
+
+/* =====================================================================
+   EXPORT / IMPORT
+   ===================================================================== */
+function download(filename, content, mime){
+  const blob = new Blob([content], {type:mime||'application/octet-stream'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+}
+function stamp(){ return new Date().toISOString().replace(/[:.]/g,'-').slice(0,19); }
+
+function exportPayload(){
+  return { app:'divinheal-tracker', kind:'backup', version:1,
+           exportedAt: Date.now(), account: S.user, data: clone(S.vault) };
+}
+function exportJSON(){
+  download('divinheal-tracker-'+stamp()+'.json', JSON.stringify(exportPayload(), null, 2), 'application/json');
+  toast('JSON backup downloaded.');
+}
+function exportHTML(){
+  const doc = document.documentElement.cloneNode(true);
+  const app = doc.querySelector('#app'); if(app){ app.innerHTML=''; app.classList.add('hidden'); }
+  const lk  = doc.querySelector('#lock'); if(lk){ lk.innerHTML=''; lk.classList.add('hidden'); }
+  ['#modalRoot','#confirmRoot','#toastRoot'].forEach(s=>{ const n=doc.querySelector(s); if(n) n.innerHTML=''; });
+  const old = doc.querySelector('#__DH_BACKUP__'); if(old) old.remove();
+
+  const s = document.createElement('script');
+  s.type = 'application/json'; s.id = '__DH_BACKUP__';
+  s.textContent = JSON.stringify(exportPayload()).replace(/</g,'\\u003c');
+  // MUST go in <head>: the app script is inline at the end of <body>, so anything
+  // appended after it is not yet parsed when boot() looks for it.
+  doc.querySelector('head').appendChild(s);
+
+  download('divinheal-tracker-backup-'+stamp()+'.html', '<!DOCTYPE html>\n'+doc.outerHTML, 'text/html');
+  toast('HTML backup downloaded — open it any time, no login needed.');
+}
+
+function importDialog(){
+  openModal({
+    title:'Import / restore',
+    bodyHTML:
+      '<div class="amberbox" style="margin-bottom:16px"><b>This replaces everything currently in this account.</b> '+
+      'Export a backup first if you are unsure.</div>'+
+      '<label class="field"><span class="lab">Choose a backup file (.html or .json)</span>'+
+      '<input class="inp" type="file" id="impFile" accept=".html,.json,text/html,application/json"></label>'+
+      '<div id="impInfo" class="muted small" style="margin-top:12px"></div>',
+    actions:[{label:'Cancel'},{label:'Import & replace', cls:'btn-danger', onClick: async ()=>{
+      const f = $('#impFile').files[0];
+      if(!f){ toast('Pick a file first.', true); return false; }
+      try{
+        const text = await f.text();
+        const payload = parseBackup(text);
+        if(!payload) throw new Error('Not a tracker backup file.');
+        const d = payload.data;
+        const ok = await confirmDialog({ title:'Replace all data?', danger:true, confirmLabel:'Yes, replace',
+          message:'Importing <b>'+esc(f.name)+'</b><br>'+
+            (payload.exportedAt?'Taken '+esc(fmtTS(payload.exportedAt))+'<br>':'')+
+            '<br>Contains: '+(d.profiles||[]).length+' profile(s), '+(d.b2b||[]).length+' partnership(s), '+
+            (d.partners||[]).length+' partner(s), '+(d.meetings||[]).length+' meeting note(s), '+
+            (d.openItems||[]).length+' open item(s).<br><br>'+
+            '<b>Everything currently in this account will be overwritten.</b>',
+          requireText:'REPLACE' });
+        if(!ok) return false;
+        pushSnapshot('Before import of '+f.name);
+        const keepSnaps = V().snapshots;
+        S.vault = migrate(d);
+        S.vault.snapshots = keepSnaps.concat(S.vault.snapshots || []).slice(0, MAX_SNAPSHOTS);
+        commit('update','bulk','import',null,null,'Imported '+f.name);
+        save(true);
+        toast('Backup imported.');
+        nav('/dash'); render();
+        return true;
+      }catch(err){ toast('Import failed: '+(err.message||err), true); return false; }
+    }}],
+    onMount(root){
+      root.querySelector('#impFile').onchange = async e => {
+        const f = e.target.files[0]; if(!f) return;
+        try{
+          const p = parseBackup(await f.text());
+          const d = p && p.data;
+          root.querySelector('#impInfo').innerHTML = d
+            ? '✓ Valid backup'+(p.exportedAt?' from '+esc(fmtTS(p.exportedAt)):'')+' — '+
+              (d.profiles||[]).length+' profiles, '+(d.b2b||[]).length+' partnerships, '+(d.partners||[]).length+' partners.'
+            : '<span style="color:var(--danger)">✕ Not a recognised tracker backup.</span>';
+        }catch(err){ root.querySelector('#impInfo').innerHTML = '<span style="color:var(--danger)">✕ Could not read that file.</span>'; }
+      };
+    }
+  });
+}
+function parseBackup(text){
+  const t = text.trim();
+  if(t.startsWith('{')){
+    const j = JSON.parse(t);
+    if(j.data && j.data.profiles) return j;
+    if(j.profiles) return { data:j, exportedAt:null };
+    return null;
+  }
+  const doc = new DOMParser().parseFromString(text, 'text/html');
+  const el = doc.querySelector('#__DH_BACKUP__');
+  if(!el) return null;
+  const j = JSON.parse(el.textContent);
+  return (j && j.data) ? j : null;
+}
+
+/* =====================================================================
+   PASSWORD / ACCOUNT MANAGEMENT
+   ===================================================================== */
+function changePasswordDialog(){
+  openModal({
+    title:'Change password',
+    bodyHTML:
+      '<div class="amberbox" style="margin-bottom:16px">Your data is encrypted with your password. '+
+      'There is no reset — if you forget the new one, the data is gone. Export a backup first.</div>'+
+      '<div class="form">'+
+      '<label class="field"><span class="lab">Current password</span><input class="inp" type="password" id="pwOld" autocomplete="current-password"></label>'+
+      '<label class="field"><span class="lab">New password</span><input class="inp" type="password" id="pwNew" autocomplete="new-password"></label>'+
+      '<label class="field"><span class="lab">Confirm new password</span><input class="inp" type="password" id="pwNew2" autocomplete="new-password"></label>'+
+      '</div>',
+    actions:[{label:'Cancel'},{label:'Change password', cls:'btn-primary', onClick: async ()=>{
+      const oldp = $('#pwOld').value, np = $('#pwNew').value, np2 = $('#pwNew2').value;
+      if(np.length < 8){ toast('New password must be at least 8 characters.', true); return false; }
+      if(np !== np2){ toast('New passwords do not match.', true); return false; }
+      const accts = readAccounts(), a = accts[S.user];
+      try{ const k = await deriveKey(oldp, a.salt, a.iter); await decryptJSON(k, a.verifier); }
+      catch(e){ toast('Current password is wrong.', true); return false; }
+      const salt = b64e(crypto.getRandomValues(new Uint8Array(16)));
+      const key = await deriveKey(np, salt, PBKDF2_ITER);
+      a.salt = salt; a.iter = PBKDF2_ITER; a.verifier = await encryptJSON(key, {ok:true, u:S.user});
+      writeAccounts(accts);
+      S.key = key;
+      localStorage.setItem(K_VAULT(S.user), JSON.stringify(await encryptJSON(key, S.vault)));
+      await stashSession();
+      toast('Password changed and data re-encrypted.');
+      return true;
+    }}]
+  });
+}
+
+async function wipeData(){
+  const ok = await confirmDialog({ title:'Delete ALL tracker data?', danger:true, confirmLabel:'Delete everything',
+    message:'Every profile, partnership, partner, meeting note, open item, snapshot and history record in '+
+      '<b>'+esc(S.user)+'</b> will be permanently erased.<br><br><b>This cannot be undone.</b> '+
+      'Your account and password stay — only the data goes.'+
+      (SY.token ? '<br><br><b>Cloud sync is on</b>, so the empty state will be pushed to your gist and your '+
+                  'other devices will be emptied too on their next sync.' : ''), requireText:'DELETE' });
+  if(!ok) return;
+  const owner = V().owner;
+  S.vault = seedVault(owner);
+  save(true);
+  toast('All data deleted.');
+  nav('/dash'); render();
+}
+async function deleteAccount(){
+  const ok = await confirmDialog({ title:'Delete this account?', danger:true, confirmLabel:'Delete account',
+    message:'Account <b>'+esc(S.user)+'</b> and all its data will be permanently removed from this browser.'+
+      '<br><br><b>This cannot be undone.</b>', requireText:'DELETE ACCOUNT' });
+  if(!ok) return;
+  const accts = readAccounts(); delete accts[S.user]; writeAccounts(accts);
+  localStorage.removeItem(K_VAULT(S.user));
+  sessionStorage.removeItem(K_SESSION);
+  location.hash = ''; location.reload();
+}
+
+/* =====================================================================
+   SESSION PERSISTENCE (so a new window inherits the unlock)
+   ===================================================================== */
+async function stashSession(){
+  try{
+    const jwk = await crypto.subtle.exportKey('jwk', S.key);
+    sessionStorage.setItem(K_SESSION, JSON.stringify({user:S.user, jwk}));
+  }catch(e){ /* non-fatal */ }
+}
+async function restoreSession(){
+  const raw = sessionStorage.getItem(K_SESSION);
+  if(!raw) return false;
+  try{
+    const {user, jwk} = JSON.parse(raw);
+    if(!readAccounts()[user]) return false;
+    const key = await crypto.subtle.importKey('jwk', jwk, {name:'AES-GCM'}, true, ['encrypt','decrypt']);
+    const blob = localStorage.getItem(K_VAULT(user));
+    const vault = blob ? migrate(await decryptJSON(key, JSON.parse(blob))) : seedVault(user);
+    S.user = user; S.key = key; S.vault = vault; S.savedAt = Date.now();
+    await loadSyncConfig();
+    return true;
+  }catch(e){ sessionStorage.removeItem(K_SESSION); return false; }
+}
+function lockSession(){
+  sessionStorage.removeItem(K_SESSION);
+  clearTimeout(syncTimer);
+  Object.assign(SY, {token:null, gistId:null, lastSeenAt:0, lastSyncAt:0, status:'off', error:null, pending:false});
+  S.user = null; S.key = null; S.vault = null;
+  $('#app').classList.add('hidden'); $('#app').innerHTML='';
+  $('#lock').classList.remove('hidden');
+  renderLock();
+}
+
+/* =====================================================================
+   LOCK SCREEN
+   ===================================================================== */
+let lockMode = 'signin';
+function renderLock(){
+  const accts = readAccounts();
+  const names = Object.keys(accts);
+  if(!names.length) lockMode = 'create';
+
+  $('#lock').innerHTML =
+    '<div class="lockcard">'+
+      '<div class="brand"><div class="logo">🧭</div><div>'+
+        '<div style="font-weight:700;font-size:16px;letter-spacing:-.02em">Partnership Tracker</div>'+
+        '<div class="small muted">Divinheal · B2B partnerships, partners & open items</div></div></div>'+
+      '<div class="lock-tabs">'+
+        '<button class="'+(lockMode==='signin'?'on':'')+'" data-lm="signin">Sign in</button>'+
+        '<button class="'+(lockMode==='create'?'on':'')+'" data-lm="create">Create account</button>'+
+      '</div>'+
+      '<form class="form" id="lockForm" autocomplete="on">'+
+        (lockMode==='signin' && names.length
+          ? '<label class="field"><span class="lab">Account</span><select class="inp" id="lkUserSel">'+
+            names.map(n=>'<option value="'+esc(n)+'">'+esc(accts[n].display||n)+'</option>').join('')+'</select></label>'
+          : '<label class="field"><span class="lab">Username</span>'+
+            '<input class="inp" id="lkUser" autocomplete="username" placeholder="e.g. adarsh" '+
+            (lockMode==='create'?'':'')+'>'+
+            (lockMode==='create'?'<div class="help">Letters, numbers, dot, dash, underscore. This is local to this browser.</div>':'')+
+            '</label>')+
+        '<label class="field"><span class="lab">Password</span>'+
+          '<input class="inp" type="password" id="lkPass" autocomplete="'+(lockMode==='create'?'new-password':'current-password')+'"></label>'+
+        (lockMode==='create'
+          ? '<label class="field"><span class="lab">Confirm password</span>'+
+            '<input class="inp" type="password" id="lkPass2" autocomplete="new-password"></label>'+
+            '<div class="warnbox">There is <b>no password reset</b>. Your data is encrypted with this password and '+
+            'never leaves this browser — if you lose it, the data is unrecoverable. Export a backup regularly.</div>'
+          : '')+
+        '<button class="btn btn-primary btn-block" type="submit">'+(lockMode==='create'?'Create account':'Unlock')+'</button>'+
+        '<div id="lkErr" class="small" style="color:var(--danger);min-height:18px"></div>'+
+      '</form>'+
+      '<div class="row" style="margin-top:10px;justify-content:center">'+
+        '<button class="btn btn-ghost btn-sm" id="lkSync">☁ Sign in from sync</button>'+
+        '<button class="btn btn-ghost btn-sm" id="lkImport">Restore from a backup file</button>'+
+        '<button class="btn btn-ghost btn-sm" data-act="theme">◐</button>'+
+      '</div>'+
+      '<div class="tiny dim" style="margin-top:16px;text-align:center;line-height:1.5">'+
+        'Data is stored encrypted in this browser only (AES-256-GCM). Nothing is uploaded anywhere.</div>'+
+    '</div>';
+
+  $$('[data-lm]').forEach(b => b.onclick = () => { lockMode = b.dataset.lm; renderLock(); });
+  $('#lkImport').onclick = () => importIntoNewAccount();
+  $('#lkSync').onclick = () => syncJoinDialog();
+
+  $('#lockForm').onsubmit = async e => {
+    e.preventDefault();
+    const err = $('#lkErr'); err.textContent = '';
+    const user = $('#lkUserSel') ? $('#lkUserSel').value : ($('#lkUser') ? $('#lkUser').value : '');
+    const pass = $('#lkPass').value;
+    try{
+      let res;
+      if(lockMode === 'create'){
+        if(pass !== $('#lkPass2').value) throw new Error('Passwords do not match.');
+        res = await createAccount(user, pass);
+        toast('Account created. Welcome.');
+      } else {
+        res = await unlockAccount(user, pass);
+      }
+      S.user = res.user; S.key = res.key; S.vault = res.vault; S.savedAt = Date.now();
+      await stashSession();
+      await loadSyncConfig();
+      $('#lock').classList.add('hidden');
+      $('#app').classList.remove('hidden');
+      if(!location.hash || location.hash === '#') location.hash = '#/dash';
+      render();
+      syncPull();
+    }catch(ex){ err.textContent = ex.message || String(ex); }
+  };
+}
+
+/* restore a backup into a brand-new account, from the lock screen */
+function importIntoNewAccount(){
+  openModal({
+    title:'Restore from backup',
+    bodyHTML:
+      '<div class="infobox" style="margin-bottom:16px">Creates a <b>new account on this browser</b> and loads the backup into it. '+
+      'Use this to move your tracker to another computer.</div>'+
+      '<div class="form">'+
+      '<label class="field"><span class="lab">Backup file (.html or .json)</span>'+
+        '<input class="inp" type="file" id="rsFile" accept=".html,.json,text/html,application/json"></label>'+
+      '<label class="field"><span class="lab">New username</span><input class="inp" id="rsUser" placeholder="e.g. adarsh"></label>'+
+      '<label class="field"><span class="lab">New password</span><input class="inp" type="password" id="rsPass"></label>'+
+      '<label class="field"><span class="lab">Confirm password</span><input class="inp" type="password" id="rsPass2"></label>'+
+      '</div>',
+    actions:[{label:'Cancel'},{label:'Restore', cls:'btn-primary', onClick: async ()=>{
+      const f = $('#rsFile').files[0];
+      if(!f){ toast('Pick a backup file.', true); return false; }
+      const u = $('#rsUser').value, p1 = $('#rsPass').value, p2 = $('#rsPass2').value;
+      if(p1 !== p2){ toast('Passwords do not match.', true); return false; }
+      try{
+        const payload = parseBackup(await f.text());
+        if(!payload) throw new Error('Not a tracker backup file.');
+        const res = await createAccount(u, p1);
+        S.user = res.user; S.key = res.key; S.vault = migrate(payload.data);
+        await stashSession();
+        save(true);
+        $('#lock').classList.add('hidden'); $('#app').classList.remove('hidden');
+        location.hash = '#/dash'; render();
+        toast('Backup restored into new account "'+res.user+'".');
+        return true;
+      }catch(err){ toast('Restore failed: '+(err.message||err), true); return false; }
+    }}]
+  });
+}
+
+/* =====================================================================
+   SEARCH
+   ===================================================================== */
+function wireSearch(){
+  const inp = $('#gsearch'), out = $('#sres');
+  if(!inp) return;
+  const close = () => { out.innerHTML=''; };
+  inp.oninput = () => {
+    const q = inp.value.trim().toLowerCase();
+    if(q.length < 2){ close(); return; }
+    const v = V(), hits = [];
+    const add = (label, sub, href) => { if(hits.length < 25) hits.push({label, sub, href}); };
+    v.profiles.forEach(p => { if(hay(p, ['name','role','org','notes','region']).includes(q))
+      add(p.name, 'Profile · '+(p.role||''), '#/profile/'+p.id); });
+    v.b2b.forEach(b => { if(hay(b, ['name','type','country','city','contactName','contactEmail','notes','org']).includes(q))
+      add(b.name, '🏢 '+(b.type||'')+' · '+(b.country||''), '#/e/b2b/'+b.id); });
+    v.partners.forEach(p => { if(hay(p, ['name','type','country','city','org','contactEmail','notes']).includes(q))
+      add(p.name, '🤝 '+(p.type||'')+' · '+(p.country||''), '#/e/partner/'+p.id); });
+    v.meetings.forEach(m => { if(hay(m, ['title','notes','attendees','decisions','next']).includes(q))
+      add((m.title||'Meeting')+' — '+fmtDate(m.date), '🗓 '+entName(m.parentType,m.parentId), '#/e/'+m.parentType+'/'+m.parentId+'?tab=meetings'); });
+    v.openItems.forEach(i => { if(hay(i, ['title','owner','notes']).includes(q))
+      add(i.title, '✓ '+(i.status||'')+' · '+entName(i.parentType,i.parentId), '#/e/'+i.parentType+'/'+i.parentId+'?tab=items'); });
+
+    out.innerHTML = hits.length
+      ? '<div class="sresults">'+hits.map(h=>'<a href="'+h.href+'" data-sres><div class="namecell">'+esc(h.label)+
+        '</div><div class="sub">'+esc(h.sub)+'</div></a>').join('')+'</div>'
+      : '<div class="sresults"><div style="padding:14px" class="dim small">No matches.</div></div>';
+  };
+  inp.onkeydown = e => { if(e.key==='Escape'){ inp.value=''; close(); inp.blur(); } };
+  out.addEventListener('click', e => { if(e.target.closest('[data-sres]')) { inp.value=''; close(); } });
+}
+/* registered once, not per render */
+document.addEventListener('click', e => {
+  if(e.target.closest('.searchwrap')) return;
+  const o = document.getElementById('sres');
+  if(o) o.innerHTML = '';
+});
+function hay(o, keys){ return keys.map(k=>String(o[k]||'')).join(' ').toLowerCase(); }
+
+/* =====================================================================
+   GLOBAL LIST MANAGEMENT (settings)
+   ===================================================================== */
+function glistAdd(k){
+  openForm({ title:'Add to '+globalLabel(k), submitLabel:'Add',
+    fields:[{name:'val', label:'New entry', required:true, placeholder:'e.g. Cooperative society'}],
+    onSubmit(v){
+      const list = V().globals[k];
+      if(list.some(x=>x.toLowerCase()===v.val.toLowerCase())){ toast('Already in the list.'); return; }
+      list.push(v.val); list.sort((a,b)=>a.localeCompare(b));
+      commit('update','global',k,null,{list:k, added:v.val},'Added "'+v.val+'" to '+globalLabel(k));
+      toast('Added.'); render();
+    }});
+}
+async function glistDel(k, val){
+  const v = V();
+  let used = 0;
+  const check = (arr, field) => arr.forEach(r => {
+    const f = r[field];
+    if(Array.isArray(f)) { if(f.includes(val)) used++; }
+    else if(f === val) used++;
+  });
+  if(k==='b2bTypes') check(v.b2b,'type');
+  if(k==='partnerTypes') check(v.partners,'type');
+  if(k==='countries'){ check(v.b2b,'country'); check(v.partners,'country'); }
+  if(k==='stages'){ check(v.b2b,'stage'); check(v.partners,'stage'); }
+  if(k==='institutions') check(v.partners,'institutions');
+  if(k==='priorities') check(v.openItems,'priority');
+  if(k==='itemStatuses') check(v.openItems,'status');
+
+  const ok = await confirmDialog({ title:'Remove from dropdown?', danger:used>0, confirmLabel:'Remove',
+    message:'“<b>'+esc(val)+'</b>” will disappear from the '+esc(globalLabel(k))+' dropdown.'+
+      (used ? '<br><br><b>'+used+' existing record(s) still use it.</b> They keep the value — it just will not be offered for new entries.' : '') });
+  if(!ok) return;
+  v.globals[k] = v.globals[k].filter(x=>x!==val);
+  commit('update','global',k,{list:k, removed:val},null,'Removed "'+val+'" from '+globalLabel(k));
+  toast('Removed.'); render();
+}
+
+/* =====================================================================
+   ACTION DISPATCH
+   ===================================================================== */
+const MUTATIONS = new Set(['new-profile','edit-profile','del-profile','new-b2b','edit-b2b','del-b2b',
+  'new-partner','edit-partner','del-partner','new-meeting','edit-meeting','del-meeting',
+  'new-item','new-item-any','edit-item','del-item','toggle-item','restore-hist','restore-snapshot',
+  'del-snapshot','snapshot-now','import','wipe-data','delete-account','change-pw','glist-add','glist-del','edit-owner',
+  'sync-connect','sync-disconnect','sync-now','sync-pull']);
+
+document.addEventListener('click', async e => {
+  // nav-able stat cards
+  const navCard = e.target.closest('[data-nav]');
+  if(navCard && !e.target.closest('[data-act]')){ nav(navCard.dataset.nav); return; }
+
+  // in-page tab switching (preserves the rest of the route)
+  const tab = e.target.closest('[data-tab]');
+  if(tab){ nav(tab.dataset.base.replace('#','') + '?tab=' + tab.dataset.tab); return; }
+
+  const el = e.target.closest('[data-act]');
+  if(!el) return;
+  const act = el.dataset.act;
+
+  if(S.readOnly && MUTATIONS.has(act)){ toast('This is a read-only backup copy.', true); return; }
+
+  const id = el.dataset.id, t = el.dataset.t, pid = el.dataset.pid;
+
+  switch(act){
+    case 'theme': {
+      const cur = document.documentElement.dataset.theme;
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      try{ localStorage.setItem(K_THEME, next); }catch(_){}
+      break;
+    }
+    case 'lock': lockSession(); break;
+
+    case 'new-profile':  profileForm(null); break;
+    case 'edit-profile': profileForm(profile(id)); break;
+    case 'del-profile':  delProfile(id); break;
+
+    case 'new-b2b':      b2bForm(pid, null); break;
+    case 'edit-b2b':     { const r = entity('b2b', id); b2bForm(r.profileId, r); break; }
+    case 'del-b2b':      delEntity('b2b', id); break;
+
+    case 'new-partner':  partnerForm(pid, null); break;
+    case 'edit-partner': { const r = entity('partner', id); partnerForm(r.profileId, r); break; }
+    case 'del-partner':  delEntity('partner', id); break;
+
+    case 'new-meeting':  meetingForm(t, id, null); break;
+    case 'edit-meeting': { const m = byId(V().meetings, id); meetingForm(m.parentType, m.parentId, m); break; }
+    case 'del-meeting':  delMeeting(id); break;
+
+    case 'new-item':     itemForm(t, id, null); break;
+    case 'new-item-any': itemForm(null, null, null); break;
+    case 'edit-item':    { const i = byId(V().openItems, id); itemForm(null, null, i); break; }
+    case 'del-item':     delItem(id); break;
+    case 'toggle-item': {
+      const i = byId(V().openItems, id); if(!i) break;
+      const before = clone(i);
+      i.status = (i.status === 'Done') ? 'Open' : 'Done';
+      i.closedAt = i.status === 'Done' ? Date.now() : null;
+      i.updatedAt = Date.now();
+      commit('update','item',i.id,before,clone(i),i.title+' → '+i.status);
+      render();
+      break;
+    }
+
+    case 'open-win': {
+      const url = location.origin + location.pathname + location.search + '#/e/' + t + '/' + id;
+      window.open(url, 'dh_'+t+'_'+id, 'width=1150,height=860,noopener');
+      break;
+    }
+
+    case 'export-html': exportHTML(); break;
+    case 'export-json': case 'dl-json': exportJSON(); break;
+    case 'import':      importDialog(); break;
+    case 'snapshot-now': pushSnapshot('Manual snapshot'); save(true); toast('Snapshot taken.'); render(); break;
+    case 'dl-snapshot': {
+      const s = byId(V().snapshots, id);
+      download('divinheal-snapshot-'+new Date(s.ts).toISOString().slice(0,10)+'.json',
+               JSON.stringify({app:'divinheal-tracker', kind:'backup', version:1, exportedAt:s.ts,
+                               data: Object.assign(JSON.parse(s.json), {history:[], snapshots:[], meta:{}})}, null, 2),
+               'application/json');
+      break;
+    }
+    case 'restore-snapshot': {
+      const s = byId(V().snapshots, id);
+      const ok = await confirmDialog({ title:'Restore this snapshot?', danger:true, confirmLabel:'Restore',
+        message:'Everything will be rolled back to <b>'+esc(fmtTS(s.ts))+'</b>.<br><br>'+
+          'A snapshot of the current state is taken first, so this is reversible.', requireText:'RESTORE' });
+      if(!ok) break;
+      pushSnapshot('Before restoring '+fmtTS(s.ts));
+      const d = JSON.parse(s.json);
+      Object.assign(V(), {globals:d.globals, profiles:d.profiles, b2b:d.b2b, partners:d.partners,
+                          meetings:d.meetings, openItems:d.openItems});
+      commit('update','bulk','snapshot','','','Restored snapshot from '+fmtTS(s.ts));
+      toast('Snapshot restored.'); render();
+      break;
+    }
+    case 'del-snapshot': {
+      const s = byId(V().snapshots, id);
+      const ok = await confirmDialog({ title:'Delete snapshot?', danger:true, confirmLabel:'Delete',
+        message:'The snapshot from <b>'+esc(fmtTS(s.ts))+'</b> will be removed permanently.' });
+      if(!ok) break;
+      V().snapshots = V().snapshots.filter(x=>x.id!==id); save(); render();
+      break;
+    }
+    case 'restore-hist': restoreHistory(id); break;
+
+    case 'change-pw':      changePasswordDialog(); break;
+    case 'wipe-data':      wipeData(); break;
+    case 'delete-account': deleteAccount(); break;
+    case 'edit-owner':
+      openForm({ title:'Owner name', submitLabel:'Save',
+        fields:[{name:'owner', label:'Your name', value:V().owner}],
+        onSubmit(v){ V().owner = v.owner; save(); toast('Saved.'); render(); }});
+      break;
+
+    case 'glist-add': glistAdd(el.dataset.k); break;
+    case 'glist-del': glistDel(el.dataset.k, el.dataset.v); break;
+
+    case 'sync-connect':    syncConnectDialog(); break;
+    case 'sync-disconnect': syncDisconnect(); break;
+    case 'sync-now':        syncPush({force:true, announce:true}); break;
+    case 'sync-pull':       syncPull({announce:true}); break;
+
+    case 'clear-filters': nav('/items'); break;
+  }
+});
+
+/* filters on the Open Items page */
+document.addEventListener('change', e => {
+  const f = e.target.closest('[data-filter]');
+  if(!f) return;
+  const {parts, q} = parseRoute();
+  if(parts[0] !== 'items') return;
+  const key = f.dataset.filter;
+  const val = f.type === 'checkbox' ? (f.checked ? '1' : '') : f.value;
+  if(val) q.set(key, val); else q.delete(key);
+  const s = q.toString();
+  nav('/items' + (s ? '?'+s : ''));
+});
+document.addEventListener('input', e => {
+  const f = e.target.closest('[data-filter="owner"]');
+  if(!f) return;
+  clearTimeout(f._t);
+  f._t = setTimeout(()=>{
+    const {q} = parseRoute();
+    if(f.value) q.set('owner', f.value); else q.delete('owner');
+    const s = q.toString();
+    nav('/items' + (s ? '?'+s : ''));
+    setTimeout(()=>{ const n = $('[data-filter="owner"]'); if(n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } }, 10);
+  }, 320);
+});
+
+/* warn on close while a save is still pending */
+window.addEventListener('beforeunload', e => {
+  if(S.dirty && !S.readOnly){ e.preventDefault(); e.returnValue = ''; }
+});
+
+/* =====================================================================
+   BOOT
+   ===================================================================== */
+(async function boot(){
+  try{ const th = localStorage.getItem(K_THEME); if(th) document.documentElement.dataset.theme = th; }catch(_){}
+
+  const embedded = document.getElementById('__DH_BACKUP__');
+  if(embedded){
+    try{
+      const payload = JSON.parse(embedded.textContent);
+      S.vault = migrate(payload.data);
+      S.vault.__exportedAt = payload.exportedAt;
+      S.user = payload.account || 'backup';
+      S.readOnly = true;
+      $('#lock').classList.add('hidden');
+      $('#app').classList.remove('hidden');
+      if(!location.hash || location.hash === '#') location.hash = '#/dash';
+      render();
+      return;
+    }catch(e){
+      document.body.innerHTML = '<div style="padding:40px;font-family:sans-serif">This backup file is corrupted: '+esc(e.message)+'</div>';
+      return;
+    }
+  }
+
+  if(!crypto || !crypto.subtle){
+    $('#lock').innerHTML = '<div class="lockcard"><div class="warnbox"><b>This browser cannot encrypt data.</b><br>'+
+      'The tracker needs the Web Crypto API, which requires <b>https://</b> or <b>localhost</b>. '+
+      'If you opened this file directly from disk, host it on GitHub Pages instead.</div></div>';
+    return;
+  }
+
+  if(await restoreSession()){
+    $('#lock').classList.add('hidden');
+    $('#app').classList.remove('hidden');
+    if(!location.hash || location.hash === '#') location.hash = '#/dash';
+    render();
+    syncPull();
+  } else {
+    lockMode = Object.keys(readAccounts()).length ? 'signin' : 'create';
+    renderLock();
+  }
+})();
+</script>
+</body>
+</html>

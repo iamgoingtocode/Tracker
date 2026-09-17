@@ -1,0 +1,11 @@
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# local tooling / machine-specific
+.claude/
+
+# never commit exported vaults
+divinheal-tracker-backup-*.html
+divinheal-tracker-*.json
+divinheal-snapshot-*.json
