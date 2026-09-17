@@ -9,3 +9,10 @@ desktop.ini
 divinheal-tracker-backup-*.html
 divinheal-tracker-*.json
 divinheal-snapshot-*.json
+
+# Data exports: NEVER commit these to a public repo.
+# They contain real partner names, phone numbers and meeting notes.
+*.json
+!package.json
+divinheal-*
+*backup*.html

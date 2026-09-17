@@ -428,11 +428,19 @@ function seedVault(displayName){
       countries: ['Kenya','Nigeria','Tanzania','Uganda','Ethiopia','Ghana','Zambia','Zimbabwe','Botswana','Rwanda',
                   'UAE','Oman','Saudi Arabia','Qatar','Kuwait','Bahrain','Yemen','Iraq',
                   'Bangladesh','Nepal','Sri Lanka','Myanmar','Maldives','India','Other'],
-      stages: ['Identified','Initial contact','In discussion','Proposal shared','Negotiation','MoU / Agreement signed',
-               'Live — sending cases','On hold','Dropped'],
+      stages: ['Not Contacted','Contacted - Awaiting Response','In Discussion','Agreement Shared',
+               'Verbal / Signed Commitment','Onboarded','Active','Paused / Dormant',
+               'Not Interested','Not Pursuing'],
       itemStatuses: ['Open','In progress','Blocked','Done'],
       priorities: ['High','Medium','Low'],
-      institutions: []
+      institutions: [],
+      partnerPriorities: ['P0','P1','P2','P3','Do Not Pursue'],
+      researchTiers: ['Strong','Moderate','Weak','Avoid','Competitor'],
+      typesOfHelp: ['Warm Introduction (Email/Message)','Call Set Up','In-Person Meeting Arranged',
+                    'Reference / Vouching','Other'],
+      engagementStages: ['Opportunity Identified','Introduction Requested','Introduction Made',
+                         'Call / Meeting Scheduled','Call / Meeting Completed','Relationship Established',
+                         'Added to Pipeline','Declined / Not Possible']
     },
     profiles: [], b2b: [], partners: [], meetings: [], openItems: [],
     history: [], snapshots: [],
@@ -912,6 +920,161 @@ function syncJoinDialog(){
 }
 
 /* =====================================================================
+   PARTNER ONBOARDING & RATING
+   Carried over unchanged from the Divinheal sheet: the 5-item onboarding
+   checklist, the 8-dimension rating model out of 40, and its tier bands.
+   ===================================================================== */
+const ONBOARD_ITEMS = [
+  ['onlineMeeting','Online meeting done',      'A real-time video/voice call has happened (Zoom, Teams, WhatsApp call) beyond written outreach.'],
+  ['whatsappGroup','WhatsApp group created',   'A shared channel exists for fast day-to-day case coordination.'],
+  ['contentShared','Digital content shared',   'They have our pitch materials and any patient-facing content they need to refer confidently.'],
+  ['cadenceSet',   'Meeting cadence set',      'A recurring check-in cadence has been agreed (need not literally be weekly).'],
+  ['readyToEngage','Ready to engage',          'They understand the model well enough to introduce us by name and vouch for us.']
+];
+const RATING_DIMS = [
+  ['patientAccess', 'Patient Access',      'Real access to patients needing our target treatments. 1 = little relevant contact, 5 = direct and frequent.'],
+  ['trustInfluence','Trust / Influence',   'How much their recommendation moves a decision. 1 = no real influence, 5 = decisions follow their word.'],
+  ['followUp',      'Follow-up Discipline','Reliability on cases and commitments. 1 = goes quiet, 5 = consistently responsive.'],
+  ['teamStrength',  'Team Strength',       'People behind them. 1 = one person no backup, 5 = a real team or institution.'],
+  ['outreachAbility','Outreach Ability',   'Can originate leads, not just react. 1 = passive only, 5 = actively originates.'],
+  ['systemAdoption','System Adoption',     'Willingness to use our tools and process. 1 = resists, 5 = adopts fully.'],
+  ['transparency',  'Transparency',        'Openness about business, incentives and conflicts. 1 = opaque, 5 = fully transparent.'],
+  ['commitment',    'Commitment',          'Real time and effort invested so far. 1 = none shown, 5 = already invested real effort.']
+];
+const RATING_MAX = RATING_DIMS.length * 5;
+
+function ratingTotal(e){
+  return RATING_DIMS.reduce((s,[k]) => s + (Number(e.rating && e.rating[k]) || 0), 0);
+}
+function ratingScored(e){
+  return RATING_DIMS.filter(([k]) => Number(e.rating && e.rating[k]) > 0).length;
+}
+function capabilityTier(total){
+  if(total >= 32) return 'Strategic Growth';
+  if(total >= 24) return 'Build-with-Us';
+  if(total >= 16) return 'Referral';
+  return 'Low Priority';
+}
+function tierBadgeClass(t){
+  return { 'Strategic Growth':'b-green', 'Build-with-Us':'b-blue', 'Referral':'b-amber', 'Low Priority':'' }[t] || '';
+}
+function onboardDone(e){
+  return ONBOARD_ITEMS.filter(([k]) => (e.onboarding && e.onboarding[k]) === 'Yes').length;
+}
+/* the sheet's gate: all five checklist items Yes AND total score 24+ */
+function isOnboarded(e){
+  return onboardDone(e) === ONBOARD_ITEMS.length && ratingTotal(e) >= 24;
+}
+function tierBadge(e){
+  const t = capabilityTier(ratingTotal(e));
+  return '<span class="badge '+tierBadgeClass(t)+'">'+esc(t)+'</span>';
+}
+function prioBadgeP(p){
+  const map = {'P0':'b-red','P1':'b-red','P2':'b-amber','P3':'','Do Not Pursue':'b-red'};
+  return p ? '<span class="badge '+(map[p]||'')+'">'+esc(p)+'</span>' : '<span class="dim">—</span>';
+}
+function researchBadge(t){
+  const map = {'Strong':'b-green','Moderate':'b-blue','Weak':'b-amber','Avoid':'b-red','Competitor':'b-purple'};
+  return t ? '<span class="badge '+(map[t]||'')+'">'+esc(t)+'</span>' : '<span class="dim">—</span>';
+}
+
+/* Update the live totals in place. A full render() here would rebuild every select
+   mid-edit, losing focus and making rapid data entry unusable. */
+function paintScoring(type, id){
+  const e = entity(type, id);
+  if(!e) return;
+  const total = ratingTotal(e), tier = capabilityTier(total);
+  const done = onboardDone(e), onboarded = isOnboarded(e);
+  const set = (sel, html, cls) => {
+    const el = document.getElementById(sel);
+    if(!el) return;
+    el.innerHTML = html;
+    if(cls !== undefined) el.className = cls;
+  };
+  set('scDone', done + ' / 5 done', 'badge ' + (done === 5 ? 'b-green' : 'b-amber'));
+  set('scTotal', total + ' / ' + RATING_MAX, 'badge b-blue');
+  set('scTier', esc(tier), 'badge ' + tierBadgeClass(tier));
+  set('scTotalBig', String(total));
+  const gate = document.getElementById('scGate');
+  if(gate){
+    gate.className = onboarded ? 'infobox' : 'amberbox';
+    gate.innerHTML = onboarded
+      ? '<b>\u2713 Onboarded.</b> All five checklist items are Yes and the score is ' + total +
+        ' (24+). Move this partner into active engagement.'
+      : '<b>Not yet onboarded.</b> ' +
+        (done < 5 ? (5 - done) + ' checklist item' + (5 - done > 1 ? 's' : '') + ' outstanding. '
+                  : 'Checklist complete. ') +
+        (total < 24 ? 'Score is ' + total + ', needs 24+ (Build-with-Us or better).'
+                    : 'Score of ' + total + ' clears the gate.');
+  }
+  const tabBtn = document.querySelector('[data-tab="scoring"] .cnt');
+  if(tabBtn) tabBtn.textContent = done + '/5 \u00b7 ' + total;
+}
+
+/* ---------- the Onboarding & rating pane ---------- */
+function scoringPane(type, id){
+  const e = entity(type, id);
+  const total = ratingTotal(e), scored = ratingScored(e), tier = capabilityTier(total);
+  const done = onboardDone(e), onboarded = isOnboarded(e);
+  const ro = !canEdit();
+
+  const sel = (name, val, opts, attr) =>
+    '<select class="inp" style="width:auto;min-width:104px" '+attr+(ro?' disabled':'')+'>'+
+      opts.map(o => '<option value="'+esc(o.v)+'"'+(String(o.v)===String(val||'')?' selected':'')+'>'+esc(o.l)+'</option>').join('')+
+    '</select>';
+
+  const yn = [{v:'',l:'—'},{v:'Yes',l:'Yes'},{v:'No',l:'No'}];
+  const scale = [{v:'',l:'—'}].concat([1,2,3,4,5].map(n=>({v:n,l:String(n)})));
+
+  let html =
+    '<div class="card" style="margin-bottom:16px"><div class="card-head">'+
+      '<div><h2>Onboarding checklist</h2><div class="muted tiny">All five must be Yes — and the score 24+ — before this partner counts as Onboarded.</div></div>'+
+      '<span class="badge '+(done===5?'b-green':'b-amber')+'" id="scDone">'+done+' / 5 done</span>'+
+    '</div><div class="card-pad" style="display:grid;gap:12px">'+
+      ONBOARD_ITEMS.map(([k,label,help]) =>
+        '<div class="spread" style="gap:16px;align-items:flex-start">'+
+          '<div class="grow"><div style="font-weight:600;font-size:13.5px">'+esc(label)+'</div>'+
+          '<div class="muted tiny" style="margin-top:2px">'+esc(help)+'</div></div>'+
+          sel('ob_'+k, e.onboarding && e.onboarding[k], yn,
+              'data-onboard="'+esc(k)+'" data-t="'+type+'" data-id="'+id+'"')+
+        '</div>').join('')+
+    '</div></div>';
+
+  html +=
+    '<div class="card" style="margin-bottom:16px"><div class="card-head">'+
+      '<div><h2>Partner rating</h2><div class="muted tiny">Eight dimensions, 1–5 each. '+
+        (scored ? scored+' of 8 scored.' : 'Not scored yet — a fresh partner sits at Low Priority by design, not by mistake.')+'</div></div>'+
+      '<div class="row"><span class="badge b-blue" id="scTotal">'+total+' / '+RATING_MAX+'</span>'+
+        '<span class="badge '+tierBadgeClass(tier)+'" id="scTier">'+esc(tier)+'</span></div>'+
+    '</div><div class="card-pad" style="display:grid;gap:12px">'+
+      RATING_DIMS.map(([k,label,help]) =>
+        '<div class="spread" style="gap:16px;align-items:flex-start">'+
+          '<div class="grow"><div style="font-weight:600;font-size:13.5px">'+esc(label)+'</div>'+
+          '<div class="muted tiny" style="margin-top:2px">'+esc(help)+'</div></div>'+
+          sel('rt_'+k, e.rating && e.rating[k], scale,
+              'data-score="'+esc(k)+'" data-t="'+type+'" data-id="'+id+'"')+
+        '</div>').join('')+
+      '<div style="border-top:1px solid var(--border);padding-top:12px" class="spread">'+
+        '<div><b>Total</b> <span class="muted tiny">32–40 Strategic Growth · 24–31 Build-with-Us · 16–23 Referral · below 16 Low Priority</span></div>'+
+        '<div style="font-size:22px;font-weight:700"><span id="scTotalBig">'+total+'</span>'+
+          '<span class="muted" style="font-size:14px">/'+RATING_MAX+'</span></div>'+
+      '</div>'+
+    '</div></div>';
+
+  html +=
+    '<div id="scGate" class="'+(onboarded?'infobox':'amberbox')+'">'+
+      (onboarded
+        ? '<b>✓ Onboarded.</b> All five checklist items are Yes and the score is '+total+' (24+). '+
+          'Move this partner into active engagement.'
+        : '<b>Not yet onboarded.</b> '+
+          (done < 5 ? (5-done)+' checklist item'+(5-done>1?'s':'')+' outstanding. ' : 'Checklist complete. ')+
+          (total < 24 ? 'Score is '+total+', needs 24+ (Build-with-Us or better).' : 'Score of '+total+' clears the gate.'))+
+    '</div>';
+
+  return html;
+}
+
+/* =====================================================================
    DATA ACCESSORS
    ===================================================================== */
 const byId = (arr,id) => arr.find(x=>x.id===id);
@@ -935,7 +1098,10 @@ function lastActivity(t,id){
   return ts;
 }
 function stageBadge(stage){
-  const map = {'Live — sending cases':'b-green','MoU / Agreement signed':'b-green','Negotiation':'b-blue',
+  const map = {'Active':'b-green','Onboarded':'b-green','Verbal / Signed Commitment':'b-green',
+    'Agreement Shared':'b-blue','In Discussion':'b-blue','Contacted - Awaiting Response':'b-purple',
+    'Not Contacted':'','Paused / Dormant':'b-amber','Not Interested':'b-red','Not Pursuing':'b-red',
+    'Live — sending cases':'b-green','MoU / Agreement signed':'b-green','Negotiation':'b-blue',
     'Proposal shared':'b-blue','In discussion':'b-blue','Initial contact':'b-purple','Identified':'',
     'On hold':'b-amber','Dropped':'b-red'};
   return '<span class="badge '+(map[stage]||'')+'">'+esc(stage||'—')+'</span>';
@@ -1265,7 +1431,8 @@ function viewDash(){
   const items = openOf(v.openItems);
   const overdue = items.filter(i=>i.due && daysUntil(i.due)<0);
   const soon = items.filter(i=>i.due && daysUntil(i.due)>=0 && daysUntil(i.due)<=7);
-  const live = v.b2b.filter(b=>['Live — sending cases','MoU / Agreement signed'].includes(b.stage)).length;
+  const live = v.b2b.filter(b=>['Active','Onboarded','Verbal / Signed Commitment',
+                               'Live — sending cases','MoU / Agreement signed'].includes(b.stage)).length;
   const recent = v.meetings.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,6);
 
   const stat = (k,val,s,cls,href) =>
@@ -1442,7 +1609,8 @@ function partnerPane(pid, rows){
   if(!rows.length) return html + '<div class="empty"><div class="big">🤝</div>No partners logged for this profile yet.</div></div>';
 
   html += '<div class="tablewrap"><table class="tbl"><thead><tr>'+
-    '<th>Partner</th><th>Type</th><th>Country</th><th>Institutions tied</th><th>Stage</th><th>Meetings</th><th>Open</th><th>Last activity</th><th></th>'+
+    '<th>Partner</th><th>Type</th><th>Country</th><th>Institutions tied</th><th>Status</th>'+
+    '<th>Tier</th><th>Checklist</th><th>Meetings</th><th>Open</th><th></th>'+
     '</tr></thead><tbody>'+
     rows.slice().sort((a,b)=>lastActivity('partner',b.id)-lastActivity('partner',a.id)).map(r=>{
       const ms = entMeetings('partner', r.id).length;
@@ -1457,9 +1625,10 @@ function partnerPane(pid, rows){
             (inst.length>3?'<span class="chip">+'+(inst.length-3)+'</span>':'')+'</div>'
           : '<span class="dim">—</span>')+'</td>'+
         '<td>'+stageBadge(r.stage)+'</td>'+
+        '<td>'+tierBadge(r)+'<div class="sub">'+ratingTotal(r)+'/'+RATING_MAX+'</div></td>'+
+        '<td class="nowrap"><span class="badge '+(onboardDone(r)===5?'b-green':'')+'">'+onboardDone(r)+'/5</span></td>'+
         '<td>'+(ms||'<span class="dim">0</span>')+'</td>'+
         '<td>'+(oi?'<span class="badge b-amber">'+oi+'</span>':'<span class="dim">0</span>')+'</td>'+
-        '<td class="dim small nowrap">'+relTime(lastActivity('partner',r.id))+'</td>'+
         '<td class="acts">'+
           '<button class="btn btn-ghost btn-sm" data-act="open-win" data-t="partner" data-id="'+r.id+'" title="Open in a new window">⧉</button>'+
           (canEdit()?'<button class="btn btn-ghost btn-sm" data-act="edit-partner" data-id="'+r.id+'">Edit</button>'+
@@ -1515,10 +1684,15 @@ function viewEntity(type, id, q){
     '<button class="tab'+(tab==='overview'?' on':'')+'" data-tab="overview" data-base="'+base+'">Overview</button>'+
     '<button class="tab'+(tab==='meetings'?' on':'')+'" data-tab="meetings" data-base="'+base+'">🗓 Meeting notes <span class="cnt">'+ms.length+'</span></button>'+
     '<button class="tab'+(tab==='items'?' on':'')+'" data-tab="items" data-base="'+base+'">✓ Open items <span class="cnt">'+openN+'</span></button>'+
+    (type==='partner'
+      ? '<button class="tab'+(tab==='scoring'?' on':'')+'" data-tab="scoring" data-base="'+base+'">📋 Onboarding &amp; rating '+
+        '<span class="cnt">'+onboardDone(e)+'/5 · '+ratingTotal(e)+'</span></button>'
+      : '')+
     '<button class="tab'+(tab==='history'?' on':'')+'" data-tab="history" data-base="'+base+'">⛁ History <span class="cnt">'+hist.length+'</span></button>'+
     '</div>';
 
-  if(tab==='overview')      html += entityOverview(type, e, p);
+  if(tab==='scoring' && type==='partner') html += scoringPane(type, id);
+  else if(tab==='overview') html += entityOverview(type, e, p);
   else if(tab==='meetings') html += meetingsPane(type, id, ms);
   else if(tab==='items')    html += '<div class="card"><div class="card-head"><h2>Open items</h2>'+
       (canEdit()?'<button class="btn btn-primary btn-sm" data-act="new-item" data-t="'+type+'" data-id="'+id+'">＋ Add item</button>':'')+'</div>'+
@@ -1552,11 +1726,23 @@ function entityOverview(type, e, p){
     '<dt>Type</dt><dd>'+esc(e.type||'—')+'</dd>'+
     '<dt>Country</dt><dd>'+esc(e.country||'—')+'</dd>'+
     (e.city?'<dt>City</dt><dd>'+esc(e.city)+'</dd>':'')+
-    '<dt>Stage</dt><dd>'+stageBadge(e.stage)+'</dd>'+
+    '<dt>Status</dt><dd>'+stageBadge(e.stage)+'</dd>'+
+    (e.partnerId?'<dt>Partner ID</dt><dd class="mono small">'+esc(e.partnerId)+'</dd>':'')+
+    (e.priorityTier?'<dt>Priority</dt><dd>'+prioBadgeP(e.priorityTier)+'</dd>':'')+
+    (e.researchTier?'<dt>Research tier</dt><dd>'+researchBadge(e.researchTier)+
+       (e.potentialScore?' <span class="muted small">potential '+esc(e.potentialScore)+'/100</span>':'')+'</dd>':'')+
+    (type==='partner'?'<dt>Capability tier</dt><dd>'+tierBadge(e)+
+       ' <span class="muted small">'+ratingTotal(e)+'/'+RATING_MAX+' · checklist '+onboardDone(e)+'/5</span></dd>':'')+
+    (e.typeOfHelp?'<dt>Type of help</dt><dd>'+esc(e.typeOfHelp)+'</dd>':'')+
+    (e.engagementStage?'<dt>Engagement stage</dt><dd><span class="badge b-blue">'+esc(e.engagementStage)+'</span></dd>':'')+
+    (e.hook?'<dt>Hook</dt><dd><i>'+esc(e.hook)+'</i></dd>':'')+
+    (e.nextAction?'<dt>Next action</dt><dd>'+esc(e.nextAction)+'</dd>':'')+
+    (e.owner?'<dt>Divinheal owner</dt><dd>'+esc(e.owner)+'</dd>':'')+
     (type==='b2b'&&e.org?'<dt>Parent group</dt><dd>'+esc(e.org)+'</dd>':'')+
     (type==='partner'&&e.org?'<dt>Organisation</dt><dd>'+esc(e.org)+'</dd>':'')+
     '<dt>Contact</dt><dd>'+
-      ([e.contactName, e.contactEmail, e.contactPhone].filter(Boolean).map(esc).join(' · ') || '<span class="dim">—</span>')+'</dd>'+
+      ([e.contactName, e.contactTitle, e.contactEmail, e.contactPhone].filter(Boolean).map(esc).join(' · ') || '<span class="dim">—</span>')+'</dd>'+
+    (e.linkedin?'<dt>LinkedIn</dt><dd>'+linkify(e.linkedin)+'</dd>':'')+
     (e.website?'<dt>Website</dt><dd>'+linkify(e.website)+'</dd>':'')+
     (type==='partner'&&e.commission?'<dt>Commission</dt><dd>'+esc(e.commission)+'</dd>':'')+
     rel+
@@ -1923,6 +2109,25 @@ function partnerForm(pid, rec){
       {name:'contactEmail', label:'Email', type:'email', half:true, value:rec&&rec.contactEmail},
       {name:'contactPhone', label:'Phone / WhatsApp', type:'tel', half:true, value:rec&&rec.contactPhone},
       {name:'commission', label:'Commission / terms', value:rec&&rec.commission, placeholder:'e.g. 40% of received commission ≤$10k, 50% above'},
+      {name:'contactTitle', label:'Their title / role', half:true, value:rec&&rec.contactTitle},
+      {name:'linkedin', label:'LinkedIn', half:true, value:rec&&rec.linkedin},
+      {name:'typeOfHelp', label:'Type of help they give', type:'select', half:true,
+        options:g.typesOfHelp||[], value:rec&&rec.typeOfHelp, global:'typesOfHelp',
+        help:'How this partner opens a door for us.'},
+      {name:'engagementStage', label:'Engagement stage', type:'select', half:true,
+        options:g.engagementStages||[], value:rec&&rec.engagementStage, global:'engagementStages',
+        help:'How far that specific ask has progressed.'},
+      {name:'priorityTier', label:'Priority', type:'select', half:true,
+        options:g.partnerPriorities||[], value:rec&&rec.priorityTier, global:'partnerPriorities'},
+      {name:'researchTier', label:'Research tier', type:'select', half:true,
+        options:g.researchTiers||[], value:rec&&rec.researchTier, global:'researchTiers',
+        help:'Desk-research judgement, decided before real contact.'},
+      {name:'partnerId', label:'Partner ID', half:true, value:rec&&rec.partnerId,
+        placeholder:'e.g. IQ-003', help:'Matches the ID in your Google Sheet.'},
+      {name:'owner', label:'Divinheal owner', half:true, value:rec&&rec.owner},
+      {name:'hook', label:'One-line hook', value:rec&&rec.hook,
+        placeholder:'Why this partner matters, in one line'},
+      {name:'nextAction', label:'Next action', value:rec&&rec.nextAction},
       {name:'linkedB2b', label:'Institutions we are tying this partner with', type:'multi', options:b2bOpts,
         value:rec&&rec.linkedB2b, help:'Tick the B2B partnerships in this profile that this partner is being connected to.'},
       {name:'institutions', label:'Other institutions (not tracked as B2B)', type:'multi',
@@ -2686,6 +2891,29 @@ document.addEventListener('click', async e => {
 
     case 'clear-filters': nav('/items'); break;
   }
+});
+
+/* inline onboarding-checklist and rating edits (saved as you change them) */
+document.addEventListener('change', e => {
+  const ob = e.target.closest('[data-onboard]');
+  const sc = e.target.closest('[data-score]');
+  const el = ob || sc;
+  if(!el) return;
+  if(!canEdit()){ toast('This is a read-only backup copy.', true); return; }
+  const rec = entity(el.dataset.t, el.dataset.id);
+  if(!rec) return;
+  const before = clone(rec);
+  if(ob){
+    rec.onboarding = Object.assign({}, rec.onboarding);
+    rec.onboarding[ob.dataset.onboard] = ob.value;
+  } else {
+    rec.rating = Object.assign({}, rec.rating);
+    rec.rating[sc.dataset.score] = sc.value ? Number(sc.value) : '';
+  }
+  rec.updatedAt = Date.now();
+  commit('update', el.dataset.t, rec.id, before, clone(rec),
+         rec.name + ' \u2014 ' + (ob ? 'checklist' : 'rating') + ' updated');
+  paintScoring(el.dataset.t, el.dataset.id);
 });
 
 /* filters on the Open Items page */
