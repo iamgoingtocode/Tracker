@@ -284,6 +284,10 @@ select.inp{cursor:pointer}
   .modal-f{flex-direction:column-reverse;align-items:stretch}
   .modal-f .btn{width:100%;justify-content:center}
   .form .grid2{grid-template-columns:1fr}
+  #lock{padding:12px}
+  .lockcard{padding:20px}
+  #lock .row{flex-wrap:wrap}
+  .filters .inp{min-width:0;flex:1 1 130px}
 }
 </style>
 </head>
@@ -1867,7 +1871,8 @@ function itemsTable(rows, opt){
   opt = opt || {};
   return '<div class="tablewrap"><table class="tbl"><thead><tr>'+
     '<th></th><th>Item</th>'+(opt.showParent?'<th>Against</th>':'')+
-    '<th>Owner</th><th>Due</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>'+
+    '<th>Owner</th><th>'+(opt.closed?'Closed':'Due')+'</th><th>Priority</th><th>Status</th><th></th>'+
+    '</tr></thead><tbody>'+
     rows.map(i=>{
       const done = i.status==='Done';
       return '<tr'+(done?' class="done-row"':'')+'>'+
@@ -1884,10 +1889,14 @@ function itemsTable(rows, opt){
               : '<span class="dim">—</span>')+'</td>'
           : '')+
         '<td class="small">'+esc(i.owner||'—')+'</td>'+
-        '<td class="nowrap small">'+dueCell(i)+'</td>'+
+        '<td class="nowrap small">'+(opt.closed
+          ? (i.closedAt ? esc(fmtTS(i.closedAt).split(',')[0]) + '<div class="sub">'+esc(relTime(i.closedAt))+'</div>'
+                        : '<span class="dim">—</span>')
+          : dueCell(i))+'</td>'+
         '<td>'+prioBadge(i.priority)+'</td>'+
         '<td>'+itemBadge(i.status)+'</td>'+
         '<td class="acts">'+(canEdit()?
+          (opt.closed?'<button class="btn btn-ghost btn-sm" data-act="reopen-item" data-id="'+i.id+'">↺ Reopen</button>':'')+
           '<button class="btn btn-ghost btn-sm" data-act="edit-item" data-id="'+i.id+'">Edit</button>'+
           '<button class="btn btn-ghost btn-sm" data-act="del-item" data-id="'+i.id+'" title="Delete">🗑</button>':'')+'</td></tr>';
     }).join('')+'</tbody></table></div>';
@@ -1898,20 +1907,22 @@ function itemsTable(rows, opt){
    ===================================================================== */
 function viewItems(q){
   const v = V();
+  const view     = q.get('view')    || 'open';
+  const closed   = view === 'closed';
   const fProfile = q.get('profile') || '';
-  const fStatus  = q.get('status')  || 'open';
+  const fStatus  = q.get('status')  || '';
   const fPrio    = q.get('prio')    || '';
   const fOwner   = q.get('owner')   || '';
   const overdueOnly = q.get('overdue')==='1';
 
-  let rows = v.openItems.slice();
+  let rows = v.openItems.filter(i => closed ? i.status==='Done' : i.status!=='Done');
   if(fProfile) rows = rows.filter(i=>i.profileId===fProfile);
-  if(fStatus==='open') rows = rows.filter(i=>i.status!=='Done');
-  else if(fStatus && fStatus!=='all') rows = rows.filter(i=>i.status===fStatus);
+  if(!closed && fStatus) rows = rows.filter(i=>i.status===fStatus);
   if(fPrio) rows = rows.filter(i=>i.priority===fPrio);
   if(fOwner) rows = rows.filter(i=>(i.owner||'').toLowerCase().includes(fOwner.toLowerCase()));
-  if(overdueOnly) rows = rows.filter(i=>i.status!=='Done' && i.due && daysUntil(i.due)<0);
-  rows.sort(itemSort);
+  if(!closed && overdueOnly) rows = rows.filter(i=>i.due && daysUntil(i.due)<0);
+  if(closed) rows.sort((a,b)=>(b.closedAt||b.updatedAt||0)-(a.closedAt||a.updatedAt||0));
+  else rows.sort(itemSort);
 
   const all = v.openItems;
   const openN = openOf(all).length;
@@ -1919,28 +1930,40 @@ function viewItems(q){
 
   const opt = (val,label,cur) => '<option value="'+esc(val)+'"'+(String(cur)===String(val)?' selected':'')+'>'+esc(label)+'</option>';
 
-  let html = '<div class="page-head spread"><div><h1>Open Items</h1>'+
-    '<div class="muted small">Everything outstanding across every profile, partnership and partner — '+
-    openN+' open'+(overN?', <b class="due-over">'+overN+' overdue</b>':'')+'.</div></div>'+
+  const closedN = all.filter(i=>i.status==='Done').length;
+
+  let html = '<div class="page-head spread"><div><h1>'+(closed?'Closed Items':'Open Items')+'</h1>'+
+    '<div class="muted small">'+(closed
+      ? closedN+' item'+(closedN===1?'':'s')+' closed. Reopen any of them if they come back.'
+      : 'Everything outstanding across every profile, partnership and partner — '+
+        openN+' open'+(overN?', <b class="due-over">'+overN+' overdue</b>':'')+'.')+'</div></div>'+
     (canEdit()?'<button class="btn btn-primary" data-act="new-item-any">＋ New item</button>':'')+'</div>';
+
+  html += '<div class="tabs">'+
+    '<button class="tab'+(closed?'':' on')+'" data-itemview="open">✓ Open <span class="cnt">'+openN+'</span></button>'+
+    '<button class="tab'+(closed?' on':'')+'" data-itemview="closed">✔ Closed <span class="cnt">'+closedN+'</span></button>'+
+    '</div>';
 
   html += '<div class="filters">'+
     '<select class="inp" data-filter="profile">'+opt('','All profiles',fProfile)+
       v.profiles.map(p=>opt(p.id,p.name,fProfile)).join('')+'</select>'+
-    '<select class="inp" data-filter="status">'+
-      opt('open','Open only',fStatus)+opt('all','All statuses',fStatus)+
-      v.globals.itemStatuses.map(s=>opt(s,s,fStatus)).join('')+'</select>'+
+    (closed?'':'<select class="inp" data-filter="status">'+
+      opt('','Any open status',fStatus)+
+      v.globals.itemStatuses.filter(x=>x!=='Done').map(s=>opt(s,s,fStatus)).join('')+'</select>')+
     '<select class="inp" data-filter="prio">'+opt('','Any priority',fPrio)+
       v.globals.priorities.map(s=>opt(s,s,fPrio)).join('')+'</select>'+
     '<input class="inp" data-filter="owner" type="search" placeholder="Owner contains…" value="'+esc(fOwner)+'">'+
-    '<label class="row small" style="gap:6px;cursor:pointer"><input type="checkbox" data-filter="overdue"'+(overdueOnly?' checked':'')+
-      ' style="width:15px;height:15px;accent-color:var(--accent)"> Overdue only</label>'+
+    (closed?'':'<label class="row small" style="gap:6px;cursor:pointer"><input type="checkbox" data-filter="overdue"'+(overdueOnly?' checked':'')+
+      ' style="width:15px;height:15px;accent-color:var(--accent)"> Overdue only</label>')+
     '<button class="btn btn-sm btn-ghost" data-act="clear-filters">Clear</button>'+
     '</div>';
 
   html += '<div class="card">'+
-    (rows.length ? itemsTable(rows, {showParent:true})
-                 : '<div class="empty"><div class="big">✓</div>Nothing matches these filters.</div>')+
+    (rows.length
+      ? itemsTable(rows, {showParent:true, closed:closed})
+      : '<div class="empty"><div class="big">'+(closed?'✔':'✓')+'</div>'+
+        (closed ? 'Nothing closed yet. Items you tick off land here.'
+                : 'Nothing open. Everything is either closed or not raised yet.')+'</div>')+
     '</div>';
   return html;
 }
@@ -2846,12 +2869,23 @@ const MUTATIONS = new Set(['new-profile','edit-profile','del-profile','new-b2b',
   'new-partner','edit-partner','del-partner','new-meeting','edit-meeting','del-meeting',
   'new-item','new-item-any','edit-item','del-item','toggle-item','restore-hist','restore-snapshot',
   'del-snapshot','snapshot-now','import','wipe-data','delete-account','change-pw','glist-add','glist-del','edit-owner',
-  'sync-connect','sync-disconnect','sync-now','sync-pull']);
+  'sync-connect','sync-disconnect','sync-now','sync-pull','reopen-item']);
 
 document.addEventListener('click', async e => {
   // nav-able stat cards
   const navCard = e.target.closest('[data-nav]');
   if(navCard && !e.target.closest('[data-act]')){ nav(navCard.dataset.nav); return; }
+
+  // Open / Closed switch on the items page, keeping the other filters
+  const iv = e.target.closest('[data-itemview]');
+  if(iv){
+    const {q} = parseRoute();
+    if(iv.dataset.itemview === 'closed') q.set('view','closed'); else q.delete('view');
+    q.delete('overdue'); q.delete('status');
+    const qs = q.toString();
+    nav('/items' + (qs ? '?'+qs : ''));
+    return;
+  }
 
   // in-page tab switching (preserves the rest of the route)
   const tab = e.target.closest('[data-tab]');
@@ -2897,11 +2931,29 @@ document.addEventListener('click', async e => {
     case 'del-item':     delItem(id); break;
     case 'toggle-item': {
       const i = byId(V().openItems, id); if(!i) break;
+      if(i.status !== 'Done'){
+        const ok = await confirmDialog({
+          title:'Close this item?', confirmLabel:'Close it',
+          message:'<b>'+esc(i.title)+'</b>'+
+            (i.parentId?'<br><span style="opacity:.8">'+esc(entName(i.parentType,i.parentId))+'</span>':'')+
+            '<br><br>It moves to the <b>Closed</b> tab, where you can reopen it any time.' });
+        if(!ok){ render(); break; }   // put the tickbox back
+      }
       const before = clone(i);
       i.status = (i.status === 'Done') ? 'Open' : 'Done';
       i.closedAt = i.status === 'Done' ? Date.now() : null;
       i.updatedAt = Date.now();
       commit('update','item',i.id,before,clone(i),i.title+' → '+i.status);
+      toast(i.status === 'Done' ? 'Closed — find it under Closed.' : 'Reopened.');
+      render();
+      break;
+    }
+    case 'reopen-item': {
+      const i = byId(V().openItems, id); if(!i) break;
+      const before = clone(i);
+      i.status = 'Open'; i.closedAt = null; i.updatedAt = Date.now();
+      commit('update','item',i.id,before,clone(i),i.title+' → reopened');
+      toast('Reopened.');
       render();
       break;
     }
