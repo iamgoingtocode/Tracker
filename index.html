@@ -835,6 +835,51 @@ function choiceDialog({title, message, choices}){
   });
 }
 
+/* Look for vaults this token can already see. Creating a second vault by accident
+   is the worst failure mode here: both devices sync happily, to different places. */
+async function findRemoteVaults(token){
+  const list = await ghFetch('/gists?per_page=100', null, token);
+  const hits = (list || []).filter(g => g.files && g.files[GIST_FILE]).slice(0, 8);
+  const out = [];
+  for(const g of hits){
+    const f = g.files[GIST_FILE];
+    const info = { id:g.id, size:f.size || 0, updatedAt:0, device:'unknown' };
+    try{
+      const pl = await gistReadPayload(g.id, token);
+      info.updatedAt = pl.updatedAt || 0;
+      info.device = pl.device || 'unknown';
+      info.account = pl.account || '';
+    }catch(e){ /* unreadable - still list it */ }
+    out.push(info);
+  }
+  out.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+  return out;
+}
+
+/* Returns a gist id to use, '' to create a new one, or null if cancelled. */
+async function pickRemoteVault(token, allowNew){
+  const vaults = await findRemoteVaults(token);
+  if(!vaults.length) return allowNew ? '' : null;
+  const describe = v => v.device + '  \u00b7  ' +
+        (v.updatedAt ? fmtTS(v.updatedAt) : 'unknown date') + '  \u00b7  ' + bytes(v.size);
+  if(vaults.length === 1 && !allowNew) return vaults[0].id;
+  const choices = vaults.map(v => ({label: describe(v), cls:''}));
+  choices[0].cls = 'btn-primary';
+  if(allowNew) choices.push({label:'None of these \u2014 start a brand new vault', cls:'btn-ghost'});
+  const pick = await choiceDialog({
+    title: vaults.length === 1 ? 'Existing vault found' : 'Which vault should this device use?',
+    message: vaults.length === 1
+      ? 'This GitHub account already has a synced tracker vault. Join it so this device shows the '+
+        'same data \u2014 picking \u201cstart a brand new vault\u201d instead would leave you with '+
+        '<b>two separate trackers that never meet</b>.'
+      : 'Your GitHub account holds '+vaults.length+' tracker vaults. The newest and largest is almost '+
+        'certainly the real one. Picking the wrong one leaves this device out of step.',
+    choices });
+  if(pick < 0) return null;
+  if(allowNew && pick === vaults.length) return '';
+  return vaults[pick].id;
+}
+
 /* ---------- connect / disconnect ---------- */
 const TOKEN_URL = 'https://github.com/settings/tokens/new?scopes=gist&description=Divinheal%20Tracker%20sync';
 function syncSetupStepsHTML(){
@@ -862,17 +907,25 @@ function syncConnectDialog(){
           '<input class="inp mono" type="password" id="syTok" autocomplete="off" spellcheck="false" placeholder="ghp_…"></label>'+
         '<label class="field"><span class="lab">Existing gist ID (optional)</span>'+
           '<input class="inp mono" type="text" id="syGist" autocomplete="off" spellcheck="false" placeholder="leave blank to create a new private gist">'+
-          '<div class="help">Only needed if a vault is already synced and you want this device to join it.</div></label>'+
+          '<div class="help">Leave blank and this device will look for a vault already synced to your '+
+          'GitHub account and offer to join it, rather than starting a second one.</div></label>'+
       '</div>'+
       '<div class="amberbox" style="margin-top:16px">The token is stored <b>encrypted with your password</b> on this '+
       'device and is never written into exported backups. Revoke it any time from GitHub settings.</div>',
     actions:[{label:'Cancel'},{label:'Connect', cls:'btn-primary', onClick: async ()=>{
       const tok = $('#syTok').value.trim();
-      const gid = $('#syGist').value.trim();
+      let gid = $('#syGist').value.trim();   // reassigned when we discover an existing vault
       if(!tok){ toast('Paste your token first.', true); return false; }
       try{
         await ghFetch('/user', null, tok);
-        SY.token = tok; SY.gistId = gid || null; SY.lastSeenAt = 0;
+        SY.token = tok; SY.lastSeenAt = 0;
+        if(!gid){
+          // never create a second vault without asking
+          const picked = await pickRemoteVault(tok, true);
+          if(picked === null){ SY.token=null; SY.gistId=null; SY.status='off'; return false; }
+          gid = picked;
+        }
+        SY.gistId = gid || null;
         if(gid){
           const remote = await gistReadPayload(gid, tok);
           const pick = await choiceDialog({
@@ -942,23 +995,10 @@ function syncJoinDialog(){
       try{
         await ghFetch('/user', null, tok);
         if(!gid){
-          const list = await ghFetch('/gists?per_page=100', null, tok);
-          const hits = (list || []).filter(g => g.files && g.files[GIST_FILE])
-                        .sort((a,b) => String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
-          if(!hits.length) throw new Error('No synced tracker vault found in your gists. Paste the gist ID explicitly, or turn sync on from your other device first.');
-          if(hits.length === 1) gid = hits[0].id;
-          else {
-            // never silently guess between several vaults
-            const pick = await choiceDialog({
-              title:'Several synced vaults found',
-              message:'This GitHub account holds '+hits.length+' tracker vaults. Pick the one to sign in to — newest first.',
-              choices: hits.slice(0,6).map(g => ({
-                label: g.id.slice(0,10) + '…  ·  updated ' +
-                       (g.updated_at ? new Date(g.updated_at).toLocaleString('en-GB') : 'unknown'), cls:'' }))
-            });
-            if(pick < 0) return false;
-            gid = hits[pick].id;
-          }
+          const picked = await pickRemoteVault(tok, false);
+          if(picked === null) return false;
+          if(!picked) throw new Error('No synced tracker vault found in this GitHub account. Turn sync on from your other device first, then come back here.');
+          gid = picked;
         }
         const payload = await gistReadPayload(gid, tok);
         const user = (payload.account || 'me');
