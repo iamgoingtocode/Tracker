@@ -263,14 +263,27 @@ select.inp{cursor:pointer}
   border-radius:var(--r-sm);background:var(--surface-2)}
 
 @media(max-width:860px){
-  .shell{flex-direction:column}
-  .sidebar{width:100%;position:static;height:auto;display:flex;gap:4px;overflow-x:auto;
-    border-right:0;border-bottom:1px solid var(--border);padding:8px}
+  .shell{flex-direction:column;align-items:stretch}
+  .sidebar{width:100%;max-width:100%;position:static;height:auto;display:flex;gap:4px;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;border-right:0;border-bottom:1px solid var(--border);padding:8px}
+  .sidebar .navlink{flex:0 0 auto}
   .navsec{display:none}
   .navlink{margin:0;white-space:nowrap}
-  .content{padding:16px 14px 70px}
+  .content{padding:16px 14px 70px;width:100%;max-width:100%;min-width:0}
   .searchwrap{max-width:none}
   .brandname{display:none}
+  table.tbl{min-width:560px}
+}
+/* phone: let the header wrap instead of forcing the page wider than the screen */
+@media(max-width:560px){
+  .topbar{height:auto;flex-wrap:wrap;padding:8px 12px;gap:8px;row-gap:6px}
+  .searchwrap{order:5;flex:1 1 100%;max-width:none}
+  .savepill{font-size:11px;padding:4px 8px}
+  .content{padding:14px 12px 70px}
+  .stats{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  .modal-f{flex-direction:column-reverse;align-items:stretch}
+  .modal-f .btn{width:100%;justify-content:center}
+  .form .grid2{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -683,10 +696,65 @@ async function syncPush(opts){
   paintSyncState();
 }
 
+function askPassword({title, message, label}){
+  return new Promise(resolve=>{
+    $('#confirmRoot').innerHTML =
+      '<div class="backdrop" data-abd><div class="modal narrow" role="dialog" aria-modal="true">'+
+        '<div class="modal-h"><h2>'+esc(title)+'</h2></div>'+
+        '<div class="modal-b"><div class="infobox" style="margin-bottom:14px">'+message+'</div>'+
+          '<label class="field"><span class="lab">'+esc(label||'Password')+'</span>'+
+          '<input class="inp" type="password" id="apPass" autocomplete="current-password"></label></div>'+
+        '<div class="modal-f"><button class="btn" id="apNo">Cancel</button>'+
+          '<button class="btn btn-primary" id="apYes">Continue</button></div>'+
+      '</div></div>';
+    const root = $('#confirmRoot');
+    const done = v => { root.innerHTML=''; resolve(v); };
+    root.querySelector('#apNo').onclick = ()=>done(null);
+    root.querySelector('#apYes').onclick = ()=>done(root.querySelector('#apPass').value);
+    root.querySelector('[data-abd]').onclick = e => { if(e.target.hasAttribute('data-abd')) done(null); };
+    const inp = root.querySelector('#apPass');
+    inp.onkeydown = e => { if(e.key==='Enter') done(inp.value); };
+    setTimeout(()=>inp.focus(), 50);
+  });
+}
+
+/* Returns a key that actually opens `remote`, asking for the password and
+   re-deriving from the remote salt when this device has its own. */
+async function keyForRemote(remote){
+  if(S.key){
+    try{ await decryptJSON(S.key, remote.blob); return {key:S.key, rekey:false}; }catch(_){}
+  }
+  if(!remote.kdf || !remote.kdf.salt)
+    throw new Error('That synced vault is too old to open here - re-enable sync on the other device.');
+  const pass = await askPassword({
+    title:'Confirm your password',
+    message:'This device set up its own account, so it has a different encryption salt and cannot '+
+            'open the synced vault yet.<br><br>Enter the password you use on your <b>other device</b> '+
+            'and this device will adopt that vault.',
+    label:'Password from your other device'});
+  if(pass === null) throw new Error('Cancelled.');
+  const k = await deriveKey(pass, remote.kdf.salt, remote.kdf.iter || PBKDF2_ITER);
+  try{ await decryptJSON(k, remote.blob); }
+  catch(e){ throw new Error('That password does not open the synced vault.'); }
+  return {key:k, rekey:true};
+}
+
 async function applyRemote(remote){
-  let v;
-  try{ v = await decryptJSON(S.key, remote.blob); }
-  catch(e){ throw new Error('The synced vault was encrypted with a different password, so it cannot be opened here.'); }
+  const got = await keyForRemote(remote);
+  const v = await decryptJSON(got.key, remote.blob);
+  if(got.rekey){
+    // adopt the synced vault's KDF so every later sync on this device just works
+    const accts = readAccounts(), a = accts[S.user];
+    if(a){
+      a.salt = remote.kdf.salt;
+      a.iter = remote.kdf.iter || PBKDF2_ITER;
+      a.verifier = await encryptJSON(got.key, {ok:true, u:S.user});
+      writeAccounts(accts);
+    }
+    S.key = got.key;
+    await stashSession();
+    toast('This device now shares the synced vault.');
+  }
   pushSnapshot('Before pulling sync from ' + remote.device);
   const keepSnaps = S.vault.snapshots;
   S.vault = migrate(v);
@@ -1442,6 +1510,11 @@ function viewDash(){
   let html =
     '<div class="page-head"><h1>Dashboard</h1>'+
     '<div class="muted small">'+(v.owner?esc(v.owner)+' · ':'')+fmtDate(todayISO())+'</div></div>'+
+    (canEdit() && !SY.token
+      ? '<div class="amberbox" style="margin-bottom:18px"><b>Cloud sync is off on this device.</b> '+
+        'Anything you add here stays on this device only, and data from your other devices will not appear. '+
+        '<button class="btn btn-sm" data-nav="/settings" style="margin-left:8px">Turn on sync</button></div>'
+      : '')+
     '<div class="stats">'+
       stat('Profiles', v.profiles.length, 'people being tracked', '', '/profiles')+
       stat('B2B partnerships', v.b2b.length, live+' signed or live', '', '/profiles')+
@@ -2603,7 +2676,10 @@ function renderLock(){
         '<label class="field"><span class="lab">Password</span>'+
           '<input class="inp" type="password" id="lkPass" autocomplete="'+(lockMode==='create'?'new-password':'current-password')+'"></label>'+
         (lockMode==='create'
-          ? '<label class="field"><span class="lab">Confirm password</span>'+
+          ? '<div class="amberbox" style="margin:2px 0 4px">Already using this tracker on another device? '+
+            'Use <b>☁ Sign in from sync</b> below instead \u2014 creating an account here makes a '+
+            '<b>separate, empty</b> tracker that will not show your existing data.</div>'+
+            '<label class="field"><span class="lab">Confirm password</span>'+
             '<input class="inp" type="password" id="lkPass2" autocomplete="new-password"></label>'+
             '<div class="warnbox">There is <b>no password reset</b>. Your data is encrypted with this password and '+
             'never leaves this browser — if you lose it, the data is unrecoverable. Export a backup regularly.</div>'
@@ -2612,8 +2688,8 @@ function renderLock(){
         '<div id="lkErr" class="small" style="color:var(--danger);min-height:18px"></div>'+
       '</form>'+
       '<div class="row" style="margin-top:10px;justify-content:center">'+
-        '<button class="btn btn-ghost btn-sm" id="lkSync">☁ Sign in from sync</button>'+
-        '<button class="btn btn-ghost btn-sm" id="lkImport">Restore from a backup file</button>'+
+        '<button class="btn btn-sm" id="lkSync" style="flex:1;justify-content:center">☁ Sign in from sync</button>'+
+        '<button class="btn btn-ghost btn-sm" id="lkImport">Restore from a backup</button>'+
         '<button class="btn btn-ghost btn-sm" data-act="theme">◐</button>'+
       '</div>'+
       '<div class="tiny dim" style="margin-top:16px;text-align:center;line-height:1.5">'+
